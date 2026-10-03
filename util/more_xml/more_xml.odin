@@ -6,6 +6,11 @@ import "core:log"
 import "core:strings"
 import "core:mem"
 
+// Exampl error:
+//
+// xmlschemas/v0/examples/dashboard.civa.xml:23: Schemas validity error : Element '{urn:civa:1}component', attribute 'export': 'truee' is not a valid value of the atomic type 'xs:boolean'.
+// 
+
 schema_validate_xml_cstr :: proc(xml_path, xsd_path: cstring) -> bool {
     document: plibxml.xmlDocPtr = ---
     schema_parser: plibxml.xmlSchemaParserCtxtPtr = ---
