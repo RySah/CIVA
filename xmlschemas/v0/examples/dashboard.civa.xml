@@ -1,0 +1,35 @@
+<civa 
+    xmlns="urn:civa:1" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:civa:1 ../civa.xsd"
+    version="1"
+>
+    <module name="Dashboard">
+        <hook name="loadDashboard" library="civa:dashboard" symbol="load_dashboard" scope="server" />
+
+        <shader name="softFill">
+            <vertex language="wgsl" entry="vs_main">
+                <!-- Vertex-stage WGSL source -->
+            </vertex>
+            <fragment language="wgsl" entry="fs_main">
+                <!-- Fragment-stage WGSL source -->
+            </fragment>
+        </shader>
+
+        <graphic name="BrandMark" viewBox="0 0 48 48" shader="softFill">
+            <path d="M24 2 L46 24 L24 46 L2 24 Z" fill="#5b6cff" />
+        </graphic>
+
+        <component name="DashboardView" export="true">
+            <param name="model" type="DashboardModel" />
+
+            <layout type="column" gap="16">
+                <draw graphic="BrandMark" width="48" height="48" />
+                <use component="DashboardContent">
+                    <arg name="model" value="model" />
+                    <arg name="reload" value="hook:loadDashboard" />
+                </use>
+            </layout>
+        </component>
+    </module>
+</civa>

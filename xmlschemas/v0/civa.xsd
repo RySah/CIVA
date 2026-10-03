@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:civa="urn:civa:1"
+    targetNamespace="urn:civa:1"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+>
+
+    <!-- Basic value types START -->
+
+    <xs:simpleType name="IdentifierType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:pattern value="[A-Za-z_][A-Za-z0-9_.-]*" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="ExpressionType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="SourcePathType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Basic value types END -->
+
+
+    <!-- 
+    Layout item attributes START
+
+    Common layout-item attributes
+
+    These describe how a node participates in its parent's layout.
+    Actual interpretation belongs to CIVA's semantic/layout phase.
+     -->
+
+    <xs:attributeGroup name="LayoutItemAttributes">
+        <xs:attribute name="width" type="civa:ExpressionType"/>
+        <xs:attribute name="height" type="civa:ExpressionType"/>
+        <xs:attribute name="min-width" type="civa:ExpressionType"/>
+        <xs:attribute name="max-width" type="civa:ExpressionType"/>
+        <xs:attribute name="min-height" type="civa:ExpressionType"/>
+        <xs:attribute name="max-height" type="civa:ExpressionType"/>
+        <xs:attribute name="visible" type="civa:ExpressionType"/>
+    </xs:attributeGroup>
+
+    <!-- Layout item attributes END -->
+
+    <!-- Global elements START -->
+
+    <xs:element name="civa" type="civa:CivaType" />
+
+    <xs:element name="module" type="civa:ModuleType" />
+
+    <xs:element name="import" type="civa:ImportType" />
+
+    <xs:element name="component" type="civa:ComponentType" />
+
+    <xs:element name="param" type="civa:ParamType" />
+
+    <xs:element name="hook" type="civa:HookType" />
+
+    <xs:element name="graphic" type="civa:GraphicType" />
+
+    <xs:element name="draw" type="civa:DrawType" />
+
+    <xs:element name="layout" type="civa:LayoutType" />
+
+    <xs:element name="use" type="civa:UseType" />
+
+    <xs:element name="arg" type="civa:ArgumentType" />
+
+    <xs:element name="if" type="civa:IfType" />
+
+    <xs:element name="then" type="civa:ContentContainerType" />
+
+    <xs:element name="else" type="civa:ContentContainerType" />
+
+    <xs:element name="font" type="civa:FontType" />
+
+    <xs:element name="shader" type="civa:ShaderType" />
+
+    <xs:element name="vertex" type="civa:ShaderStageType" />
+
+    <xs:element name="fragment" type="civa:ShaderStageType" />
+
+    <xs:element name="vector" type="civa:VectorType" />
+
+    <xs:element name="group" type="civa:VectorGroupType" />
+
+    <xs:element name="rect" type="civa:RectType" />
+
+    <xs:element name="circle" type="civa:CircleType" />
+
+    <xs:element name="path" type="civa:PathType" />
+
+    <xs:element name="text" type="civa:TextType" />
+
+    <xs:element name="html" type="civa:HtmlType" />
+
+    <!-- Global elements END -->
+
+    <!-- Root type START -->
+
+    <xs:complexType name="CivaType">
+        <xs:sequence>
+            <xs:element ref="civa:module" />
+        </xs:sequence>
+
+        <xs:attribute name="version" type="xs:string" default="1" />
+    </xs:complexType>
+
+    <!-- Root type END -->
+
+
+    <!-- Module type START -->
+
+    <xs:complexType name="ModuleType">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element ref="civa:import" />
+            <xs:element ref="civa:font" />
+            <xs:element ref="civa:shader" />
+            <xs:element ref="civa:graphic" />
+            <xs:element ref="civa:hook" />
+            <xs:element ref="civa:component" />
+            <xs:element ref="civa:html" />
+        </xs:choice>
+
+        <xs:attribute name="name" type="civa:IdentifierType" use="required"/>
+    </xs:complexType>
+
+    <!-- Module type END -->
+
+    <!-- Imports type START -->
+
+    <xs:complexType name="ImportType">
+        <xs:attribute name="src" type="civa:SourcePathType" use="required"/>
+        <xs:attribute name="alias" type="civa:IdentifierType"/>
+    </xs:complexType>
+
+    <!-- Imports type END -->
+
+    <!-- Components type START -->
+
+    <xs:complexType name="ComponentType">
+        <xs:sequence>
+            <!-- Parameters must appear before component content. -->
+            <xs:element  ref="civa:param" minOccurs="0" maxOccurs="unbounded"/>
+
+            <!-- Renderable / structural body. -->
+            <xs:group ref="civa:ContentGroup" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+
+        <xs:attribute name="name" type="civa:IdentifierType" use="required"/>
+        <xs:attribute name="export" type="xs:boolean" default="false"/>
+    </xs:complexType>
+
+    <!-- Components type END -->
+
+    <!-- Component parameters type START -->
+
+    <xs:complexType name="ParamType">
+        <xs:attribute name="name" type="civa:IdentifierType" use="required"/>
+        <xs:attribute name="type" type="civa:IdentifierType" use="required"/>
+        <xs:attribute name="default" type="civa:ExpressionType"/>
+    </xs:complexType>
+
+    <!-- Component parameters type END -->
+
+
+    <!-- Hooks type START -->
+
+    <xs:simpleType name="HookScopeType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="shared" />
+            <xs:enumeration value="client" />
+            <xs:enumeration value="server" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="HookType">
+        <xs:attribute name="name" type="civa:IdentifierType" use="required"/>
+        <xs:attribute name="library" type="civa:SourcePathType" use="required"/>
+        <xs:attribute name="symbol" type="civa:IdentifierType" use="required"/>
+        <xs:attribute name="scope" type="civa:HookScopeType" default="shared"/>
+    </xs:complexType>
+
+    <!-- Hooks type END -->
+
+    <!-- Component use / instantiation type START -->
+
+    <xs:complexType name="UseType">
+        <xs:sequence>
+            <xs:element ref="civa:arg" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+
+        <xs:attribute name="component" type="civa:IdentifierType" use="required" />
+        <xs:attribute name="id" type="civa:IdentifierType" />
+
+        <xs:attributeGroup ref="civa:LayoutItemAttributes" />
+    </xs:complexType>
+
+    <!-- Component use / instantiation type END -->
+
+    <!-- Argument type START -->
+
+    <xs:complexType name="ArgumentType">
+        <xs:attribute name="name" type="civa:IdentifierType" use="required"/>
+        <xs:attribute name="value" type="civa:ExpressionType" use="required"/>
+    </xs:complexType>
+
+    <!-- Argument type END -->
+
+
+    <!-- Layout type START -->
+
+    <xs:complexType name="LayoutType">
+        <xs:group ref="civa:ContentGroup" minOccurs="0" maxOccurs="unbounded"/>
+
+        <xs:attribute name="type" type="civa:IdentifierType" use="required"/>
+        <xs:attribute name="id" type="civa:IdentifierType"/>
+        <xs:attribute name="gap" type="civa:ExpressionType"/>
+        <xs:attribute name="padding" type="civa:ExpressionType"/>
+        <xs:attribute name="justify" type="civa:ExpressionType"/>
+        <xs:attribute name="align" type="civa:ExpressionType"/>
+        <xs:attribute name="columns" type="civa:ExpressionType"/>
+        <xs:attribute name="rows" type="civa:ExpressionType"/>
+
+        <xs:attributeGroup ref="civa:LayoutItemAttributes" />
+    </xs:complexType>
+
+    <!-- Layout type END -->
+
+    <!-- Conditions -->
+
+    <xs:complexType name="IfType">
+        <xs:sequence>
+            <xs:element ref="civa:then" />
+            <xs:element ref="civa:else" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="test" type="civa:ExpressionType" use="required"/>
+
+    </xs:complexType>
+
+
+    <xs:complexType name="ContentContainerType">
+        <xs:group ref="civa:ContentGroup" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:complexType>
+
+
+    <!-- Fonts -->
+
+    <xs:complexType name="FontType">
+        <xs:attribute name="name" type="civa:IdentifierType" use="required" />
+
+        <xs:attribute
+            name="src"
+            type="civa:SourcePathType"
+            use="required"
+        />
+
+        <xs:attribute
+            name="weight"
+            type="civa:ExpressionType"
+        />
+
+        <xs:attribute
+            name="style"
+            type="civa:ExpressionType"
+        />
+
+        <xs:attribute
+            name="export"
+            type="xs:boolean"
+            default="false"
+        />
+
+    </xs:complexType>
+
+
+    <!-- ================================================================
+         Shaders
+         ================================================================ -->
+
+    <xs:complexType name="ShaderType">
+
+        <xs:sequence>
+
+            <xs:element ref="civa:vertex" />
+
+            <xs:element ref="civa:fragment" />
+
+        </xs:sequence>
+
+        <xs:attribute
+            name="name"
+            type="civa:IdentifierType"
+            use="required"
+        />
+
+        <xs:attribute
+            name="export"
+            type="xs:boolean"
+            default="false"
+        />
+
+    </xs:complexType>
+
+
+    <xs:complexType name="ShaderStageType">
+
+        <xs:simpleContent>
+
+            <xs:extension base="xs:string">
+
+                <xs:attribute
+                    name="language"
+                    type="civa:IdentifierType"
+                    default="wgsl"
+                />
+
+                <xs:attribute
+                    name="src"
+                    type="civa:SourcePathType"
+                />
+
+                <xs:attribute
+                    name="entry"
+                    type="civa:IdentifierType"
+                />
+
+            </xs:extension>
+
+        </xs:simpleContent>
+
+    </xs:complexType>
+
+
+    <!-- ================================================================
+         Vector scene
+         ================================================================ -->
+
+    <xs:complexType name="VectorType">
+
+        <xs:group
+            ref="civa:VectorContentGroup"
+            minOccurs="0"
+            maxOccurs="unbounded"
+        />
+
+        <xs:attribute
+            name="id"
+            type="civa:IdentifierType"
+        />
+
+        <xs:attribute
+            name="viewBox"
+            type="civa:ExpressionType"
+        />
+
+        <xs:attribute
+            name="shader"
+            type="civa:IdentifierType"
+        />
+
+        <xs:attributeGroup ref="civa:LayoutItemAttributes" />
+
+    </xs:complexType>
+
+
+    <xs:complexType name="VectorGroupType">
+
+        <xs:group
+            ref="civa:VectorContentGroup"
+            minOccurs="0"
+            maxOccurs="unbounded"
+        />
+
+        <xs:attribute
+            name="id"
+            type="civa:IdentifierType"
+        />
+
+        <xs:attribute
+            name="transform"
+            type="civa:ExpressionType"
+        />
+
+        <xs:attribute
+            name="shader"
+            type="civa:IdentifierType"
+        />
+
+    </xs:complexType>
+
+
+    <!-- ================================================================
+         Vector primitives
+         ================================================================ -->
+
+    <xs:complexType name="RectType">
+
+        <xs:attribute name="id" type="civa:IdentifierType" />
+
+        <xs:attribute name="x" type="civa:ExpressionType" />
+
+        <xs:attribute name="y" type="civa:ExpressionType" />
+
+        <xs:attribute
+            name="width"
+            type="civa:ExpressionType"
+            use="required"
+        />
+
+        <xs:attribute
+            name="height"
+            type="civa:ExpressionType"
+            use="required"
+        />
+
+        <xs:attribute name="radius" type="civa:ExpressionType" />
+
+        <xs:attribute name="fill" type="civa:ExpressionType" />
+
+        <xs:attribute name="stroke" type="civa:ExpressionType" />
+
+        <xs:attribute name="stroke-width" type="civa:ExpressionType" />
+
+        <xs:attribute name="shader" type="civa:IdentifierType" />
+
+    </xs:complexType>
+
+
+    <xs:complexType name="CircleType">
+
+        <xs:attribute name="id" type="civa:IdentifierType" />
+
+        <xs:attribute name="x" type="civa:ExpressionType" />
+
+        <xs:attribute name="y" type="civa:ExpressionType" />
+
+        <xs:attribute
+            name="radius"
+            type="civa:ExpressionType"
+            use="required"
+        />
+
+        <xs:attribute name="fill" type="civa:ExpressionType" />
+
+        <xs:attribute name="stroke" type="civa:ExpressionType" />
+
+        <xs:attribute name="stroke-width" type="civa:ExpressionType" />
+
+        <xs:attribute name="shader" type="civa:IdentifierType" />
+
+    </xs:complexType>
+
+
+    <xs:complexType name="PathType">
+
+        <xs:attribute name="id" type="civa:IdentifierType" />
+
+        <xs:attribute
+            name="d"
+            type="civa:ExpressionType"
+            use="required"
+        />
+
+        <xs:attribute name="fill" type="civa:ExpressionType" />
+
+        <xs:attribute name="stroke" type="civa:ExpressionType" />
+
+        <xs:attribute name="stroke-width" type="civa:ExpressionType" />
+
+        <xs:attribute name="shader" type="civa:IdentifierType" />
+
+    </xs:complexType>
+
+
+    <xs:complexType name="TextType">
+
+        <xs:attribute name="id" type="civa:IdentifierType" />
+
+        <xs:attribute
+            name="value"
+            type="civa:ExpressionType"
+            use="required"
+        />
+
+        <xs:attribute
+            name="font"
+            type="civa:IdentifierType"
+            use="required"
+        />
+
+        <xs:attribute name="size" type="civa:ExpressionType" />
+
+        <xs:attribute name="x" type="civa:ExpressionType" />
+
+        <xs:attribute name="y" type="civa:ExpressionType" />
+
+        <xs:attribute name="fill" type="civa:ExpressionType" />
+
+        <xs:attribute name="shader" type="civa:IdentifierType" />
+
+    </xs:complexType>
+
+    <!-- ================================================================
+         Reusable vector graphics
+         ================================================================ -->
+
+    <xs:complexType name="GraphicType">
+
+        <xs:group
+            ref="civa:VectorContentGroup"
+            minOccurs="0"
+            maxOccurs="unbounded"
+        />
+
+        <xs:attribute name="name" type="civa:IdentifierType" use="required" />
+
+        <xs:attribute name="viewBox" type="civa:ExpressionType" use="required" />
+
+        <xs:attribute name="shader" type="civa:IdentifierType" />
+
+        <xs:attribute name="export" type="xs:boolean" default="false" />
+
+    </xs:complexType>
+
+    <xs:complexType name="DrawType">
+
+        <xs:attribute name="graphic" type="civa:IdentifierType" use="required" />
+
+        <xs:attribute name="id" type="civa:IdentifierType" />
+
+        <xs:attributeGroup ref="civa:LayoutItemAttributes" />
+
+    </xs:complexType>
+
+
+    <!-- ================================================================
+         HTML bridge
+
+         Foreign XML, such as XHTML, is accepted here.
+
+         Example:
+
+         <html name="Article">
+             <xhtml:article
+                 xmlns:xhtml="http://www.w3.org/1999/xhtml">
+                 ...
+             </xhtml:article>
+         </html>
+         ================================================================ -->
+
+    <xs:complexType name="HtmlType">
+
+        <xs:sequence>
+
+            <xs:any
+                namespace="##other"
+                processContents="lax"
+                minOccurs="0"
+                maxOccurs="unbounded"
+            />
+
+        </xs:sequence>
+
+        <xs:attribute
+            name="name"
+            type="civa:IdentifierType"
+            use="required"
+        />
+
+        <xs:attribute
+            name="export"
+            type="xs:boolean"
+            default="false"
+        />
+
+    </xs:complexType>
+
+
+    <!-- Reusable content groups START -->
+
+    <xs:group name="ContentGroup">
+        <xs:choice>
+            <xs:element ref="civa:layout" />
+            <xs:element ref="civa:use" />
+            <xs:element ref="civa:vector" />
+            <xs:element ref="civa:draw" />
+            <xs:element ref="civa:if" />
+        </xs:choice>
+    </xs:group>
+
+
+    <xs:group name="VectorContentGroup">
+        <xs:choice>
+            <xs:element ref="civa:group" />
+            <xs:element ref="civa:rect" />
+            <xs:element ref="civa:circle" />
+            <xs:element ref="civa:path" />
+            <xs:element ref="civa:text" />
+        </xs:choice>
+    </xs:group>
+
+    <!-- Reusable content groups END -->
+
+</xs:schema>
