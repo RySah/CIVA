@@ -1,7 +1,7 @@
-<civa 
-    xmlns="urn:civa:1" 
+<civa
+    xmlns="urn:civa:1"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="urn:civa:1 ../civa.xsd"
+    xsi:schemaLocation="urn:civa:1 https://raw.githubusercontent.com/RySah/CIVA/refs/heads/main/xmlschemas/v0/civa.xsd"
     version="1"
 >
     <module name="Dashboard">
