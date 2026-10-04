@@ -14,3 +14,7 @@ clean:
 [windows]
 build: build-ext
     odin build . -out:.out/civa.exe
+
+[windows]
+quick-run: build
+    ./.out/civa

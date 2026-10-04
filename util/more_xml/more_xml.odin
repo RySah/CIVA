@@ -5,6 +5,10 @@ import plibxml "../partial_libxml2"
 import "core:log"
 import "core:strings"
 import "core:mem"
+import "core:c"
+import "core:c/libc"
+
+import "base:runtime"
 
 // Exampl error:
 //
@@ -56,4 +60,44 @@ schema_validate_xml :: proc(xml_path, xsd_path: string) -> (res: bool, err: mem.
     defer delete(xsd_path_cstr)
     res = schema_validate_xml_cstr(xml_path_cstr, xsd_path_cstr)
     return
+}
+
+DEFAULT_XSI_NS :: "http://www.w3.org/2001/XMLSchema-instance"
+
+get_schema_location_cstr :: proc(
+    xml_path: cstring, xsi_ns: cstring = DEFAULT_XSI_NS, 
+    allocator := context.allocator
+) -> (res: Maybe(cstring), err: mem.Allocator_Error) #optional_allocator_error {
+    doc := plibxml.xmlReadFile(xml_path, nil, 0)
+    defer if doc != nil do plibxml.xmlFreeDoc(doc)
+    if doc == nil {
+        log.errorf("Failed to parse XML: %s", xml_path)
+        return
+    }
+
+    root := plibxml.xmlDocGetRootElement(doc)
+    if root == nil {
+        log.errorf("XML has no root element: %s", xml_path)
+        return
+    }
+
+    schema_loc := plibxml.xmlGetNsProp(root, "schemaLocation", xsi_ns)
+    defer if schema_loc != nil do libc.free(transmute([^]u8)schema_loc)
+
+    if schema_loc == nil {
+        res = nil
+    }
+    else {
+        res = strings.clone_to_cstring(string(schema_loc), allocator=allocator) or_return
+    }
+    return
+}
+
+get_schema_location :: proc(
+    xml_path: string, xsi_ns: cstring = DEFAULT_XSI_NS, 
+    allocator := context.allocator
+) -> (res: Maybe(cstring), err: mem.Allocator_Error) #optional_allocator_error {
+    xml_path_cstr := strings.clone_to_cstring(xml_path) or_return
+    defer delete(xml_path_cstr)
+    return get_schema_location_cstr(xml_path_cstr, xsi_ns=xsi_ns, allocator=allocator)
 }

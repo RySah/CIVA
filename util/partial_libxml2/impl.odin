@@ -5,10 +5,20 @@ when ODIN_OS == .Linux   do foreign import lib "../../.out/libxml2/lib/libxml2s.
 
 import "core:c"
 
+/*
+typedef unsigned char xmlChar;
+
+/**
+ * Macro to cast a string to an xmlChar * when one know its safe.
+ */
+#define BAD_CAST (xmlChar *)
+*/
+
 xmlDocPtr :: distinct rawptr
 xmlSchemaParserCtxtPtr :: distinct rawptr
 xmlSchemaPtr :: distinct rawptr
 xmlSchemaValidCtxtPtr :: distinct rawptr
+xmlNodePtr :: distinct rawptr
 
 XML_PARSE_NONET :: 1<<11
 
@@ -39,4 +49,12 @@ foreign lib {
 
     // void xmlFreeDoc(xmlDoc *cur)
     xmlFreeDoc :: proc "c" (cur: xmlDocPtr) ---
+
+    // xmlNode* xmlDocGetRootElement(const xmlDoc *doc)
+    xmlDocGetRootElement :: proc "c" (doc: xmlDocPtr) -> xmlNodePtr ---
+
+    // xmlChar* xmlGetNsProp(const xmlNode *node, const xmlChar *name, const xmlChar *nameSpace)
+    xmlGetNsProp :: proc "c" (node: xmlNodePtr, name: cstring, nameSpace: cstring) -> cstring ---
+
+    
 }
