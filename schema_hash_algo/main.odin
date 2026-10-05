@@ -8,12 +8,15 @@ import "core:strings"
 main :: proc() {
     Options :: struct {
 		file: ^os.File `args:"pos=0,required,file=r" usage:"Input file."`,
-		output: ^os.File `args:"pos=1,required,file=ca" usage:"Output file."`,
+		output: ^os.File `args:"pos=1,required,file=cwa" usage:"Output file."`,
     }
 
     opt: Options = ---
 	style : flags.Parsing_Style = .Odin
     flags.parse_or_exit(&opt, os.args, style)
+
+    defer os.close(opt.file)
+    defer os.close(opt.output)
 
     file_data, hash_result: []byte
     err: os.Error = ---
@@ -21,6 +24,12 @@ main :: proc() {
     file_data, err = os.read_entire_file(opt.file, context.allocator)
     if err != nil {
         fmt.eprintfln("ERR: Failed to read entire file. (%v)", err)
+        os.exit(1)
+    }
+
+    _, err = os.write_strings(opt.output, fmt.tprint(len(file_data)), " ")
+    if err != nil {
+        fmt.eprintfln("ERR: Failed to write input file length to output file. (%v)", err)
         os.exit(1)
     }
 
