@@ -11,8 +11,8 @@ clean:
 build: 
     ./build.win32
 
-quick-run: build
+run_civa: build
     ./.out/civa
 
-quick-run-hash-schema *ARGS: build
+run_hash_schema *ARGS: build
     ./.out/hash_schema {{ ARGS }}
