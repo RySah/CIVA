@@ -1,6 +1,6 @@
 @echo off
 
-rem ============================================================
+rem ---
 rem status.bat
 rem
 rem Commands:
@@ -20,7 +20,7 @@ rem
 rem   STATUS_LOG
 rem       Set by "init".
 rem
-rem ============================================================
+rem ---
 
 if "%~1"=="" goto :usage
 

@@ -4,17 +4,15 @@ set shell := ["powershell.exe", "-NoLogo", "-Command"]
 set ignore-comments
 
 [windows]
-build-ext:
-    ./external/build_ext.win32
-
-[windows]
 clean:
-    ./external/clean_ext.win32
+    ./clean.win32
 
 [windows]
-build: build-ext
-    odin build . -out:.out/civa.exe
+build: 
+    ./build.win32
 
-[windows]
 quick-run: build
     ./.out/civa
+
+quick-run-hash-schema *ARGS: build
+    ./.out/hash_schema {{ ARGS }}

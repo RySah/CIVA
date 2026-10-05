@@ -1,13 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-rem ============================================================
-rem Paths
-rem
-rem This script lives at:
-rem   PROJECT_ROOT\external\build_ext.win32
-rem ============================================================
-
 set "SCRIPT_DIR=%~dp0"
 set "PROJECT_ROOT=%SCRIPT_DIR%.."
 
@@ -21,9 +14,9 @@ set "LOG_DIR=%PROJECT_ROOT%\.out\logs"
 set "LOG_FILE=%LOG_DIR%\build_ext.log"
 
 
-rem ============================================================
+rem ---
 rem Initialize logging
-rem ============================================================
+rem ---
 
 call "%STATUS%" init "%LOG_FILE%"
 
@@ -33,9 +26,9 @@ if errorlevel 1 (
 )
 
 
-rem ============================================================
+rem ---
 rem Create build directory
-rem ============================================================
+rem ---
 
 if not exist "%BUILD_DIR%" (
     call "%STATUS%" running "Creating libxml2 build directory"
@@ -54,9 +47,9 @@ if not exist "%BUILD_DIR%" (
 )
 
 
-rem ============================================================
+rem ---
 rem Create output directory
-rem ============================================================
+rem ---
 
 if not exist "%OUTPUT_DIR%" (
     call "%STATUS%" running "Creating libxml2 output directory"
@@ -75,9 +68,9 @@ if not exist "%OUTPUT_DIR%" (
 )
 
 
-rem ============================================================
+rem ---
 rem Configure libxml2
-rem ============================================================
+rem ---
 
 call "%STATUS%" running "Configuring libxml2"
 
@@ -104,9 +97,9 @@ if not "%RESULT%"=="0" (
 )
 
 
-rem ============================================================
+rem ---
 rem Build libxml2
-rem ============================================================
+rem ---
 
 call "%STATUS%" running "Building libxml2"
 
@@ -125,9 +118,9 @@ if not "%RESULT%"=="0" (
 )
 
 
-rem ============================================================
-rem Complete
-rem ============================================================
+rem ---
+rem Completion log
+rem ---
 
 echo.
 echo Output: %OUTPUT_DIR%

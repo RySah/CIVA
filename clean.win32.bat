@@ -1,0 +1,14 @@
+@echo off
+
+set "SCRIPT_DIR=%~dp0"
+set "PROJECT_ROOT=%SCRIPT_DIR%"
+
+set "EXTERNAL_CLEAN_SCRIPT=%PROJECT_ROOT%external\clean_ext.win32.bat"
+set "HASH_SCHEMA_EXE_PATH=%PROJECT_ROOT%.out\hash_schema.exe"
+set "CIVA_EXE_PATH=%PROJECT_ROOT%.out\civa.exe"
+
+
+call "%EXTERNAL_CLEAN_SCRIPT%"
+
+IF EXIST "%HASH_SCHEMA_EXE_PATH%" DEL /F "%HASH_SCHEMA_EXE_PATH%"
+IF EXIST "%CIVA_EXE_PATH%" DEL /F "%CIVA_EXE_PATH%"

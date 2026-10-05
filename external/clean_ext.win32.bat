@@ -1,13 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-rem ============================================================
-rem Paths
-rem
-rem This script lives at:
-rem   PROJECT_ROOT\external\clean_ext.bat
-rem ============================================================
-
 set "SCRIPT_DIR=%~dp0"
 set "PROJECT_ROOT=%SCRIPT_DIR%.."
 
@@ -20,9 +13,9 @@ set "LOG_DIR=%PROJECT_ROOT%\.out\logs"
 set "LOG_FILE=%LOG_DIR%\clean_ext.log"
 
 
-rem ============================================================
+rem ---
 rem Initialize logging
-rem ============================================================
+rem ---
 
 call "%STATUS%" init "%LOG_FILE%"
 
@@ -32,9 +25,9 @@ if errorlevel 1 (
 )
 
 
-rem ============================================================
+rem ---
 rem Remove libxml2 build directory
-rem ============================================================
+rem ---
 
 if exist "%BUILD_DIR%" (
     call "%STATUS%" running "Removing libxml2 build directory"
@@ -55,9 +48,9 @@ if exist "%BUILD_DIR%" (
 )
 
 
-rem ============================================================
+rem ---
 rem Remove libxml2 output directory
-rem ============================================================
+rem ---
 
 if exist "%OUTPUT_DIR%" (
     call "%STATUS%" running "Removing libxml2 output directory"
@@ -78,9 +71,9 @@ if exist "%OUTPUT_DIR%" (
 )
 
 
-rem ============================================================
-rem Complete
-rem ============================================================
+rem ---
+rem Completion log
+rem ---
 
 echo.
 echo Log: %LOG_FILE%
