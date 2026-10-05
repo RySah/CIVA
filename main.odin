@@ -1,6 +1,6 @@
 package civa
 
-import mxml "util/more_xml"
+import qxml "util/quick_xml"
 import qcurl "util/quick_curl"
 
 import "core:fmt"
@@ -14,7 +14,7 @@ main :: proc() {
     defer qcurl.cleanup()
 
     {
-        res, err := mxml.schema_validate_xml(
+        res, err := qxml.schema_validate_xml(
             "xmlschemas/v0/examples/dashboard.civa.xml", 
             "xmlschemas/v0/civa.xsd"
         )
@@ -22,7 +22,7 @@ main :: proc() {
     }
 
     {
-        schema_loc := mxml.get_schema_location("xmlschemas/v0/examples/dashboard.civa.xml")
+        schema_loc := qxml.get_schema_location("xmlschemas/v0/examples/dashboard.civa.xml")
         defer if schema_loc_v, schema_loc_ok := schema_loc.?; schema_loc_ok do delete(schema_loc_v)
         log.infof("%v", schema_loc)
     }
