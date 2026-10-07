@@ -5,11 +5,16 @@ set "SCRIPT_DIR=%~dp0"
 set "PROJECT_ROOT=%SCRIPT_DIR%"
 
 set "STATUS=%PROJECT_ROOT%util\scripts\status.bat"
+
 set "EXTERNAL_BUILD_SCRIPT=%PROJECT_ROOT%external\build_ext.win32.bat"
-set "CIVA_EXE_PATH=%PROJECT_ROOT%.out\civa.exe"
+
+set "PROJECT_OUTPUT_DIR=%PROJECT_ROOT%.out"
+set "NPM_PACKAGE_DIR=%PROJECT_OUTPUT_DIR%\civa_pkg"
+
+set "CIVA_EXE_PATH=%PROJECT_OUTPUT_DIR%\civa.exe"
 set "CIVA_SRC_ROOT=%PROJECT_ROOT%civa"
 
-set "LOG_DIR=%PROJECT_ROOT%.out\logs"
+set "LOG_DIR=%PROJECT_OUTPUT_DIR%\logs"
 set "LOG_FILE=%LOG_DIR%\build.log"
 
 
@@ -48,7 +53,11 @@ rem ---
 rem Initialize npm project
 rem ---
 
-pushd "%PROJECT_ROOT%"
+if not exist "%NPM_PACKAGE_DIR%" (
+    mkdir "%NPM_PACKAGE_DIR%"
+)
+
+pushd "%NPM_PACKAGE_DIR%"
 
 call "%STATUS%" running "Initializing npm project"
 

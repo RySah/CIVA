@@ -5,16 +5,20 @@ set "SCRIPT_DIR=%~dp0"
 set "PROJECT_ROOT=%SCRIPT_DIR%"
 
 set "STATUS=%PROJECT_ROOT%util\scripts\status.bat"
+
 set "EXTERNAL_CLEAN_SCRIPT=%PROJECT_ROOT%external\clean_ext.win32.bat"
 
-set "PACKAGE_LOCK_JSON=%PROJECT_ROOT%package-lock.json"
-set "PACKAGE_JSON=%PROJECT_ROOT%package.json"
-set "NODE_MODULES=%PROJECT_ROOT%node_modules"
+set "PROJECT_OUTPUT_DIR=%PROJECT_ROOT%.out"
+set "NPM_PACKAGE_DIR=%PROJECT_OUTPUT_DIR%\civa_pkg"
 
-set "CIVA_EXE_PATH=%PROJECT_ROOT%.out\civa.exe"
+set "PACKAGE_LOCK_JSON=%NPM_PACKAGE_DIR%\package-lock.json"
+set "PACKAGE_JSON=%NPM_PACKAGE_DIR%\package.json"
+set "NODE_MODULES=%NPM_PACKAGE_DIR%\node_modules"
+
+set "CIVA_EXE_PATH=%PROJECT_OUTPUT_DIR%\civa.exe"
 set "CIVA_SRC_ROOT=%PROJECT_ROOT%civa"
 
-set "LOG_DIR=%PROJECT_ROOT%.out\logs"
+set "LOG_DIR=%PROJECT_OUTPUT_DIR%\logs"
 set "LOG_FILE=%LOG_DIR%\clean.log"
 
 

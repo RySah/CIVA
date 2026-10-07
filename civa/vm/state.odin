@@ -24,8 +24,22 @@ State :: struct {
     running: bool,
     exit_code: i32,
     pc: u64,
-    stack: Stack,
+    stack: ^Stack,
     reg_tbl: State_Register_Table
+}
+
+state_init :: proc "contextless" (self: ^State, 
+    reg_tbl_buf: []Reg,
+    stack: ^Stack
+) {
+    assert_contextless(len(reg_tbl_buf) >= 8)
+
+    self^ = {}
+
+    self.running = true
+
+    self.stack = stack
+    self.reg_tbl.buf = raw_data(reg_tbl_buf)
 }
 
 state_rt_roll_reg :: proc "contextless" (self: ^State_Register_Table) -> u8 {
@@ -81,44 +95,44 @@ state_opc_exec :: proc "contextless" (self: ^State, opc: OpCode) {
 
 
     POPX_8_RR_ERRO255 :: #force_inline proc "contextless" (self: ^State, $T: typeid) {
-        v := stack_pop(&self.stack, T)[0]
+        v := stack_pop(self.stack, T)[0]
         assigned_reg_idx := state_assign_roll_reg(self, v)
-        stack_push(&self.stack, assigned_reg_idx, non_overlapping=true)
+        stack_push(self.stack, assigned_reg_idx, non_overlapping=true)
     }
 
     PUSH8_X_SR :: #force_inline proc "contextless" (self: ^State, $T: typeid) {
-        reg_idx := stack_pop(&self.stack, u8)[0]
+        reg_idx := stack_pop(self.stack, u8)[0]
         v := reg_get_for_T(&self.reg_tbl.buf[reg_idx], T)^
         self.reg_tbl.in_use = transmute(State_Register_Table_Usage)((transmute(u8)self.reg_tbl.in_use) & ~(u8(1) << reg_idx))
-        stack_push(&self.stack, v, non_overlapping=true)
+        stack_push(self.stack, v, non_overlapping=true)
     }
 
     XADDX_X :: #force_inline proc "contextless" (self: ^State, $T: typeid) {
-        ab_ptr := stack_pop(&self.stack, T, count=2)
+        ab_ptr := stack_pop(self.stack, T, count=2)
         a := ab_ptr[0]
         b := ab_ptr[1]
-        stack_push(&self.stack, a + b, non_overlapping=true)
+        stack_push(self.stack, a + b, non_overlapping=true)
     }
 
     XSUBX_X :: #force_inline proc "contextless" (self: ^State, $T: typeid) {
-        ab_ptr := stack_pop(&self.stack, T, count=2)
+        ab_ptr := stack_pop(self.stack, T, count=2)
         a := ab_ptr[0]
         b := ab_ptr[1]
-        stack_push(&self.stack, a - b, non_overlapping=true)
+        stack_push(self.stack, a - b, non_overlapping=true)
     }
 
     XMULX_X :: #force_inline proc "contextless" (self: ^State, $T: typeid) {
-        ab_ptr := stack_pop(&self.stack, T, count=2)
+        ab_ptr := stack_pop(self.stack, T, count=2)
         a := ab_ptr[0]
         b := ab_ptr[1]
-        stack_push(&self.stack, a * b, non_overlapping=true)
+        stack_push(self.stack, a * b, non_overlapping=true)
     }
 
     XDIVX_X :: #force_inline proc "contextless" (self: ^State, $T: typeid) {
-        ab_ptr := stack_pop(&self.stack, T, count=2)
+        ab_ptr := stack_pop(self.stack, T, count=2)
         a := ab_ptr[0]
         b := ab_ptr[1]
-        stack_push(&self.stack, a / b, non_overlapping=true)
+        stack_push(self.stack, a / b, non_overlapping=true)
     }
 
     switch opc {
@@ -213,12 +227,12 @@ state_opc_exec :: proc "contextless" (self: ^State, opc: OpCode) {
             XDIVX_X(self, i64)
         
         case .EXIT32_0:
-            v := stack_pop(&self.stack, i32)[0]
+            v := stack_pop(self.stack, i32)[0]
             self.running = false
             self.exit_code = v
 
         case .JMP64_0:
-            v := stack_pop(&self.stack, u64)[0]
+            v := stack_pop(self.stack, u64)[0]
             self.pc = v
     }
 }
