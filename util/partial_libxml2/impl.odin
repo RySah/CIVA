@@ -1,7 +1,8 @@
 package partial_libxml2
 
 when ODIN_OS == .Windows do foreign import lib "../../.out/libxml2/lib/libxml2s.lib"
-when ODIN_OS == .Linux   do foreign import lib "../../.out/libxml2/lib/libxml2s.a"
+else                     do foreign import lib "../../.out/libxml2/lib/libxml2s.a"
+
 
 import "core:c"
 
