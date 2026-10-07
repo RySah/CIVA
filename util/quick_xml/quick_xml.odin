@@ -1,6 +1,6 @@
 package more_xml
 
-import plibxml "../partial_libxml2"
+import plibxml "../libxml2"
 
 import "core:log"
 import "core:strings"
