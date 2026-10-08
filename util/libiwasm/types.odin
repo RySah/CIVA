@@ -123,10 +123,16 @@ Val :: struct {
    _paddings: [7]libc.uint8_t,
    of: struct #raw_union {
       /* also represent a function index */
-      I32: libc.uint32_t,
-      I64: libc.uint64_t,
+      I32: libc.int32_t,
+      I64: libc.int64_t,
       F32: libc.float,
       F64: libc.double,
+      foreign_: uintptr,
       ref: ^Ref
    }
 }
+
+#assert(size_of(Val_Kind) == 1)
+#assert(size_of(Val) == 16)
+#assert(align_of(Val) == align_of(libc.uint64_t))
+#assert(offset_of(Val, of) == 8)

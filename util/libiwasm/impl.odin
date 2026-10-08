@@ -224,4 +224,27 @@ foreign lib {
      */
     wasm_runtime_get_exception :: proc "c" (module_inst: Module_Inst) -> cstring ---
 
+    /**
+     * Initialize the thread environment.
+     * Note:
+     *   If developer creates a child thread by himself to call the
+     *   the wasm function in that thread, he should call this API
+     *   firstly before calling the wasm function and then call
+     *   wasm_runtime_destroy_thread_env() after calling the wasm
+     *   function. If the thread is created from the runtime API,
+     *   it is unnecessary to call these two APIs.
+     *
+     * @return true if success, false otherwise
+     */
+    wasm_runtime_init_thread_env :: proc "c" () -> libc.bool ---
+
+    /**
+     * Destroy the thread environment
+     */
+    wasm_runtime_destroy_thread_env :: proc "c" () ---
+
+    /**
+     * Whether the thread environment is initialized
+     */
+    wasm_runtime_thread_env_inited :: proc "c" () -> libc.bool ---
 }

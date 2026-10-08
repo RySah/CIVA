@@ -11,8 +11,5 @@ clean:
 build: 
     ./build.win32
 
-run_civa: build
-    ./.out/civa
-
-run_hash_schema *ARGS: build
-    ./.out/hash_schema {{ ARGS }}
+test: build
+    odin test tests/ -all-packages -define:ODIN_TEST_THREADS=1
