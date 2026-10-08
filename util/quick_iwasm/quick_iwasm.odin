@@ -46,7 +46,7 @@ runtime_module_lookup_function :: proc(module: Runtime_Module, name: string) -> 
     return runtime_module_lookup_function_cstr(module, name_cstr)
 }
 
-runtime_module_function_get_params_into_buf :: proc "contextless" (module: Runtime_Module, func: Function, buf: []Value_Kind) {
+runtime_module_function_get_param_types_into_buf :: proc "contextless" (module: Runtime_Module, func: Function, buf: []Value_Kind) {
     when !ODIN_NO_BOUNDS_CHECK {
         expected_count := int(plibiwasm.wasm_func_get_param_count(func, module._inst))
         assert_contextless(len(buf) >= expected_count)
@@ -54,21 +54,21 @@ runtime_module_function_get_params_into_buf :: proc "contextless" (module: Runti
     plibiwasm.wasm_func_get_param_types(func, module._inst, raw_data(buf))
 }
 
-runtime_module_function_get_params_buf :: proc(module: Runtime_Module, func: Function, allocator := context.allocator) -> (buf: []Value_Kind, err: mem.Allocator_Error) #optional_allocator_error {
+runtime_module_function_get_param_types_buf :: proc(module: Runtime_Module, func: Function, allocator := context.allocator) -> (buf: []Value_Kind, err: mem.Allocator_Error) #optional_allocator_error {
     expected_count := int(plibiwasm.wasm_func_get_param_count(func, module._inst))
     buf = make([]Value_Kind, expected_count, allocator=allocator) or_return
     #no_bounds_check {
-        runtime_module_function_get_params_into_buf(module, func, buf)
+        runtime_module_function_get_param_types_into_buf(module, func, buf)
     }
     return
 }
 
-runtime_module_function_get_params :: proc{
-    runtime_module_function_get_params_into_buf,
-    runtime_module_function_get_params_buf
+runtime_module_function_get_param_types :: proc{
+    runtime_module_function_get_param_types_into_buf,
+    runtime_module_function_get_param_types_buf
 }
 
-runtime_module_function_get_results_into_buf :: proc "contextless" (module: Runtime_Module, func: Function, buf: []Value_Kind) {
+runtime_module_function_get_result_types_into_buf :: proc "contextless" (module: Runtime_Module, func: Function, buf: []Value_Kind) {
     when !ODIN_NO_BOUNDS_CHECK {
         expected_count := int(plibiwasm.wasm_func_get_result_count(func, module._inst))
         assert_contextless(len(buf) >= expected_count)
@@ -76,18 +76,18 @@ runtime_module_function_get_results_into_buf :: proc "contextless" (module: Runt
     plibiwasm.wasm_func_get_result_types(func, module._inst, raw_data(buf))
 }
 
-runtime_module_function_get_results_buf :: proc(module: Runtime_Module, func: Function, allocator := context.allocator) -> (buf: []Value_Kind, err: mem.Allocator_Error) #optional_allocator_error {
+runtime_module_function_get_result_types_buf :: proc(module: Runtime_Module, func: Function, allocator := context.allocator) -> (buf: []Value_Kind, err: mem.Allocator_Error) #optional_allocator_error {
     expected_count := int(plibiwasm.wasm_func_get_result_count(func, module._inst))
     buf = make([]Value_Kind, expected_count, allocator=allocator) or_return
     #no_bounds_check {
-        runtime_module_function_get_results_into_buf(module, func, buf)
+        runtime_module_function_get_result_types_into_buf(module, func, buf)
     }
     return
 }
 
-runtime_module_function_get_results :: proc{
-    runtime_module_function_get_results_into_buf,
-    runtime_module_function_get_results_buf
+runtime_module_function_get_result_types :: proc{
+    runtime_module_function_get_result_types_into_buf,
+    runtime_module_function_get_result_types_buf
 }
 
 runtime_module_function_call :: proc(module: Runtime_Module, func: Function, results: []Value, args: []Value) -> (success: bool) {
