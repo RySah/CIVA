@@ -2,15 +2,15 @@ package test_iwasm
 
 import "core:testing"
 
-@(private="file") WASM_MODULE :: #load("../assets/test_module0.wasm")
+@(private="file") WASM_MODULE_PATH :: "tests/assets/test_module0.wasm"
 @(private="file") DEFAULT_STACK_SIZE :: 1024
 @(private="file") DEFAULT_HEAP_SIZE :: 1024
 
 import qiwasm "../../util/quick_iwasm"
 
-_test_setup_module :: proc(t: ^testing.T) -> Maybe(qiwasm.Runtime_Module) {
+@(private="file") _test_setup_module :: proc(t: ^testing.T) -> Maybe(qiwasm.Runtime_Module) {
     err_buf: [256]u8 = {}
-    mod, mod_err := qiwasm.get_runtime_module_for_bytecode(WASM_MODULE, err_buf[:], DEFAULT_STACK_SIZE, DEFAULT_HEAP_SIZE)
+    mod, mod_err := qiwasm.get_runtime_module_from_file(WASM_MODULE_PATH, err_buf[:], DEFAULT_STACK_SIZE, DEFAULT_HEAP_SIZE)
 
     if !testing.expect(t, mod_err == .None, msg=string(cstring(raw_data(err_buf[:])))) {
         qiwasm.delete_runtime_module(&mod)
@@ -20,11 +20,11 @@ _test_setup_module :: proc(t: ^testing.T) -> Maybe(qiwasm.Runtime_Module) {
     return mod
 }
 
-_test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
+@(private="file") _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     qiwasm.delete_runtime_module(mod)
 }
 
-@test test_answer :: proc(t: ^testing.T) {
+@test test_mod0_answer_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -45,7 +45,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.I32 == 42) do return
 }
 
-@test test_double_i32 :: proc(t: ^testing.T) {
+@test test_mod0_double_i32_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -76,7 +76,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.I32 == 48) do return
 }
 
-@test test_add_i32 :: proc(t: ^testing.T) {
+@test test_mod0_add_i32_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -113,7 +113,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.I32 == 30) do return
 }
 
-@test test_multiply_add_i32 :: proc(t: ^testing.T) {
+@test test_mod0_multiply_add_i32_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -156,7 +156,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.I32 == 60) do return
 }
 
-@test test_add_i64 :: proc(t: ^testing.T) {
+@test test_mod0_add_i64_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -193,7 +193,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.I64 == 30) do return
 }
 
-@test test_add_f32 :: proc(t: ^testing.T) {
+@test test_mod0_add_f32_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -230,7 +230,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.F32 == 3.75) do return
 }
 
-@test test_multiply_f64 :: proc(t: ^testing.T) {
+@test test_mod0_multiply_f64_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -267,7 +267,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.F64 == 10.00) do return
 }
 
-@test test_greater_than :: proc(t: ^testing.T) {
+@test test_mod0_greater_than_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -304,7 +304,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.I32 == 1) do return
 }
 
-@test test_max_i32 :: proc(t: ^testing.T) {
+@test test_mod0_max_i32_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -341,7 +341,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.I32 == 20) do return
 }
 
-@test test_scale_i32 :: proc(t: ^testing.T) {
+@test test_mod0_scale_i32_by_path :: proc(t: ^testing.T) {
     mod, mod_success := _test_setup_module(t).?
     if !testing.expect(t, mod_success) do return
     defer _test_cleanup(t, &mod)
@@ -378,7 +378,7 @@ _test_cleanup :: proc(t: ^testing.T, mod: ^qiwasm.Runtime_Module) {
     if !testing.expect(t, results[0].of.F32 == 25.0) do return
 }
 
-@test test_multiple_live_modules :: proc(t: ^testing.T) {
+@test test_mod0_multiple_live_modules_by_path :: proc(t: ^testing.T) {
     first, first_success := _test_setup_module(t).?
     if !testing.expect(t, first_success) do return
     defer _test_cleanup(t, &first)

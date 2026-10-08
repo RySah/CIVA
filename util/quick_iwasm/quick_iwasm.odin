@@ -6,8 +6,9 @@ import "core:c/libc"
 import "core:strings"
 import "core:mem"
 import "core:sync"
+import "core:os"
 
-Error :: enum u8 {
+General_Error :: enum u8 {
     None,
     RuntimeInitFailed,
     BytecodeAllocationFailed,
@@ -15,6 +16,11 @@ Error :: enum u8 {
     ModuleLoadFailed,
     InstanceLoadFailed,
     ExecEnvCreationFailed
+}
+
+Error :: union #shared_nil {
+    General_Error,
+    os.Error
 }
 
 Value_Kind :: plibiwasm.Val_Kind
@@ -205,7 +211,7 @@ runtime_destroy :: proc "contextless" () {
     }
 }
 
-get_runtime_module_for_bytecode :: proc(
+get_runtime_module_from_buffer :: proc(
     data: []byte,
     err_buf: []byte,
     stack_size, default_heap_size: u32,
@@ -280,3 +286,31 @@ get_runtime_module_for_bytecode :: proc(
     release_runtime_on_exit = false
     return
 }
+
+get_runtime_module_from_file_obj :: proc(
+    file: ^os.File,
+    err_buf: []byte,
+    stack_size, default_heap_size: u32,
+    allocator := context.allocator
+) -> (runtime_mod: Runtime_Module, err: Error) {
+    buf := os.read_entire_file(file, context.allocator) or_return
+    defer delete(buf)
+    return get_runtime_module_from_buffer(buf, err_buf, stack_size, default_heap_size, allocator=allocator)
+}
+
+get_runtime_module_from_file_path :: proc(
+    path: string,
+    err_buf: []byte,
+    stack_size, default_heap_size: u32,
+    allocator := context.allocator,
+) -> (runtime_mod: Runtime_Module, err: Error) {
+    file := os.open(path) or_return
+    defer os.close(file)
+    return get_runtime_module_from_file_obj(file, err_buf, stack_size, default_heap_size, allocator=allocator)
+}
+
+get_runtime_module_from_file :: proc{
+    get_runtime_module_from_file_obj,
+    get_runtime_module_from_file_path
+}
+

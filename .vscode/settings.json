@@ -1,8 +1,0 @@
-{
-    "chat.tools.terminal.autoApprove": {
-        "/^odin version; rg -n -C 4 \"wasm_runtime_load\\\\\\(\\|wasm_runtime_instantiate\\\\\\(\\|wasm_runtime_create_exec_env\\\\\\(\\|wasm_runtime_call_wasm_a\\\\\\(\\|wasm_runtime_get_module\\\\\\(\\|wasm_func_get_param_count\\\\\\(\\|wasm_func_get_param_types\\\\\\(\\|wasm_func_get_result_count\\\\\\(\\|wasm_func_get_result_types\\\\\\(\\|wasm_runtime_init_thread_env\\\\\\(\\|wasm_runtime_thread_env_inited\\\\\\(\" external\\\\wasm-micro-runtime-WAMR-2\\.4\\.5\\\\core\\\\iwasm\\\\include\\\\wasm_export\\.h$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
-    }
-}

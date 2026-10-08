@@ -12,4 +12,4 @@ build:
     ./build.win32
 
 test: build
-    odin test tests/ -all-packages -define:ODIN_TEST_THREADS=1
+    odin test tests/ -all-packages
