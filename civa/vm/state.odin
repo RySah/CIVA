@@ -145,13 +145,13 @@ state_opc_exec :: proc "contextless" (self: ^State, opc: OpCode) {
         case .POP64_8_RR_ERRO255:
             POPX_8_RR_ERRO255(self, u64)
         
-        case .PUSH8_8_SR:
+        case .PUSH8_8_SDR:
             PUSH8_X_SR(self, u8)
-        case .PUSH8_16_SR:
+        case .PUSH8_16_SDR:
             PUSH8_X_SR(self, u16)
-        case .PUSH8_32_SR:
+        case .PUSH8_32_SDR:
             PUSH8_X_SR(self, u32)
-        case .PUSH8_64_SR:
+        case .PUSH8_64_SDR:
             PUSH8_X_SR(self, u64)
 
         case .ADD8_8:

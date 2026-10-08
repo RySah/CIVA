@@ -5,7 +5,7 @@ package civa_vm
 
 SPECIAL:
 - RR = Rolling Register, will place the data in any available register
-- SR = Source Register, expects the register index in the stack
+- SDR = Source Or Destination Register, expects the register index in the stack
 - ERRO255 = Error On 255, will push a result, if the result is 255 a error occured
 
 Examples:
@@ -17,10 +17,10 @@ OpCode :: enum u8 {
     POP32_8_RR_ERRO255 = 2,
     POP64_8_RR_ERRO255 = 3,
 
-    PUSH8_8_SR = 4,
-    PUSH8_16_SR = 5,
-    PUSH8_32_SR = 6,
-    PUSH8_64_SR = 7,
+    PUSH8_8_SDR = 4,
+    PUSH8_16_SDR = 5,
+    PUSH8_32_SDR = 6,
+    PUSH8_64_SDR = 7,
 
     ADD8_8 = 8, ADD16_16 = 9, ADD32_32 = 10, ADD64_64 = 11,
     SUB8_8 = 12, SUB16_16 = 13, SUB32_32 = 14, SUB64_64 = 15,
@@ -34,6 +34,7 @@ OpCode :: enum u8 {
     
     EXIT32_0 = 40,
 
-    JMP64_0 = 41
+    JMP64_0 = 41,
+
 }
 

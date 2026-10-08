@@ -1,4 +1,4 @@
-package more_xml
+package quick_xml
 
 import plibxml "../libxml2"
 

@@ -6,87 +6,222 @@ else                     do foreign import lib "../../.out/WAMR/lib/libiwasm.a"
 import "core:c/libc"
 
 foreign lib {
-    wasm_config_delete :: proc "c" (^wasm_config_t) ---
-    wasm_config_new :: proc "c" () -> ^wasm_config_t ---
-
-    // Embedders may provide custom functions for manipulating configs.
-    wasm_config_set_mem_alloc_opt :: proc "c" (^wasm_config_t, mem_alloc_type_t, ^MemAllocOption) -> ^wasm_config_t ---
-    wasm_config_set_linux_perf_opt :: proc "c" (^wasm_config_t, libc.bool) -> ^wasm_config_t ---
-
     /**
-     * Enable using GS register as the base address of linear memory in linux x86_64,
-     * which may speedup the linear memory access for LLVM AOT/JIT:
-     *   bit0 to bit4 denotes i32.load, i64.load, f32.load, f64.load, v128.load
-     *   bit8 to bit12 denotes i32.store, i64.store, f32.store, f64.store, v128.store
-     * For example, 0x01 enables i32.load, 0x0100 enables i32.store.
-     * To enable all load/store operations, use 0x1F1F
-     */
-    wasm_config_set_segue_flags :: proc "c" (config: ^wasm_config_t, segue_flags: libc.uint32_t) -> ^wasm_config_t ---
-
-    /**
-     * Create a new engine
+     * Initialize the WASM runtime environment, and also initialize
+     * the memory allocator with system allocator, which calls os_malloc
+     * to allocate memory
      *
-     * Note: for the engine new/delete operations, including this,
-     * wasm_engine_new_with_config, wasm_engine_new_with_args, and
-     * wasm_engine_delete, if the platform has mutex initializer,
-     * then they are thread-safe: we use a global lock to lock the
-     * operations of the engine. Otherwise they are not thread-safe:
-     * when there are engine new/delete operations happening
-     * simultaneously in multiple threads, developer must create
-     * the lock by himself, and add the lock when calling these
-     * functions.
+     * @return true if success, false otherwise
      */
-    wasm_engine_delete :: proc "c" (^wasm_engine_t) ---
-    wasm_engine_new :: proc "c" () -> ^wasm_engine_t ---
-    wasm_engine_new_with_config :: proc "c" (^wasm_config_t) -> ^wasm_engine_t ---
+    wasm_runtime_init :: proc "c" () -> libc.bool ---
 
-    wasm_store_delete :: proc "c" (^wasm_store_t) ---
-    wasm_store_new :: proc "c" (^wasm_engine_t) -> ^wasm_store_t ---
+    /**
+     * Destroy the WASM runtime environment.
+     */
+    wasm_runtime_destroy :: proc "c" () ---
+
+    /**
+     * Load a WASM module from a specified byte buffer. The byte buffer can be
+     * WASM binary data when interpreter or JIT is enabled, or AOT binary data
+     * when AOT is enabled. If it is AOT binary data, it must be 4-byte aligned.
+     *
+     * Note: In case of AOT XIP modules, the runtime doesn't make modifications
+     * to the buffer. (Except the "Known issues" mentioned in doc/xip.md.)
+     * Otherwise, the runtime can make modifications to the buffer for its
+     * internal purposes. Thus, in general, it isn't safe to create multiple
+     * modules from a single buffer.
+     *
+     * @param buf the byte buffer which contains the WASM/AOT binary data,
+     *        note that the byte buffer must be writable since runtime may
+     *        change its content for footprint and performance purpose, and
+     *        it must be referenceable until wasm_runtime_unload is called
+     * @param size the size of the buffer
+     * @param error_buf output of the exception info
+     * @param error_buf_size the size of the exception string
+     *
+     * @return return WASM module loaded, NULL if failed
+     */
+    wasm_runtime_load :: proc "c" (
+        buf: [^]libc.uint8_t, size: libc.uint32_t, 
+        error_buf: [^]libc.char, error_buf_size: libc.uint32_t
+    ) -> Module ---
+
+    /**
+     * Load a WASM module with specified load argument.
+     */
+    wasm_runtime_load_ex :: proc "c" (
+        buf: [^]libc.uint8_t, size: libc.uint32_t,
+        args: ^Load_Args,
+        error_buf: [^]libc.char, error_buf_size: libc.uint32_t
+    ) -> Module ---
+
+    /**
+     * Resolve symbols for a previously loaded WASM module. Only useful when the
+     * module was loaded with LoadArgs::no_resolve set to true
+     */
+    wasm_runtime_resolve_symbols :: proc "c" (module: Module) -> libc.bool ---
+
+    /**
+     * Unload a WASM module.
+     *
+     * @param module the module to be unloaded
+     */
+    wasm_runtime_unload :: proc "c" (module: Module) ---
+
+    /**
+     * Instantiate a WASM module.
+     *
+     * @param module the WASM module to instantiate
+     * @param default_stack_size the default stack size of the module instance when
+     *        the exec env's operation stack isn't created by user, e.g. API
+     *        wasm_application_execute_main() and wasm_application_execute_func()
+     *        create the operation stack internally with the stack size specified
+     *        here. And API wasm_runtime_create_exec_env() creates the operation
+     *        stack with stack size specified by its parameter, the stack size
+     *        specified here is ignored.
+     * @param host_managed_heap_size the default heap size of the module instance,
+     *        a heap will be created besides the app memory space. Both wasm app
+     *        and native function can allocate memory from the heap.
+     * @param error_buf buffer to output the error info if failed
+     * @param error_buf_size the size of the error buffer
+     *
+     * @return return the instantiated WASM module instance, NULL if failed
+     */
+    wasm_runtime_instantiate :: proc "c" (
+        module: Module, 
+        default_stack_size, host_managed_heap_size: libc.uint32_t, 
+        error_buf: [^]libc.char, error_buf_size: libc.uint32_t
+    ) -> Module_Inst ---
+
+    /**
+     * Deinstantiate a WASM module instance, destroy the resources.
+     *
+     * @param module_inst the WASM module instance to destroy
+     */
+    wasm_runtime_deinstantiate :: proc "c" (module_inst: Module_Inst) ---
+
+    /**
+     * Create execution environment for a WASM module instance.
+     *
+     * @param module_inst the module instance
+     * @param stack_size the stack size to execute a WASM function
+     *
+     * @return the execution environment, NULL if failed, e.g. invalid
+     *         stack size is passed
+     */
+    wasm_runtime_create_exec_env :: proc "c" (module_inst: Module_Inst, stack_size: libc.uint32_t) -> Exec_Env ---
+
+    /**
+     * Destroy the execution environment.
+     *
+     * @param exec_env the execution environment to destroy
+     */
+    wasm_runtime_destroy_exec_env :: proc "c" (exec_env: Exec_Env) ---
+
+    /**
+     * Get WASM module from WASM module instance
+     *
+     * @param module_inst the WASM module instance to retrieve
+     *
+     * @return the WASM module
+     */
+    wasm_runtime_get_module :: proc "c" (module_inst: Module_Inst) -> Module ---
+
+    /**
+     * Lookup an exported function in the WASM module instance.
+     *
+     * @param module_inst the module instance
+     * @param name the name of the function
+     *
+     * @return the function instance found, NULL if not found
+     */
+    wasm_runtime_lookup_function :: proc "c" (module_inst: Module_Inst, name: cstring) -> Function_Inst ---
+
+    /**
+     * Get parameter count of the function instance
+     *
+     * @param func_inst the function instance
+     * @param module_inst the module instance the function instance belongs to
+     *
+     * @return the parameter count of the function instance
+     */
+    wasm_func_get_param_count :: proc "c" (func_inst: Function_Inst, module_inst: Module_Inst) -> libc.uint32_t ---
+
+    /**
+     * Get result count of the function instance
+     *
+     * @param func_inst the function instance
+     * @param module_inst the module instance the function instance belongs to
+     *
+     * @return the result count of the function instance
+     */
+    wasm_func_get_result_count :: proc "c" (func_inst: Function_Inst, module_inst: Module_Inst) -> libc.uint32_t ---
     
-    wasm_valtype_vec_new_empty :: proc "c" (out: ^wasm_valtype_vec_t) ---
-    wasm_valtype_vec_new_uninitialized :: proc "c" (out: ^wasm_valtype_vec_t, _: libc.size_t) ---
-    wasm_valtype_vec_new :: proc "c" (out: ^wasm_valtype_vec_t, _: libc.size_t, _: [^]^wasm_valtype_t) ---
-    wasm_valtype_vec_copy :: proc "c" (out: ^wasm_valtype_vec_t, _: ^wasm_valtype_vec_t) ---
-    wasm_valtype_vec_delete :: proc "c" (^wasm_valtype_vec_t) ---
+    /**
+     * Get parameter types of the function instance
+     *
+     * @param func_inst the function instance
+     * @param module_inst the module instance the function instance belongs to
+     * @param param_types the parameter types returned
+     */
+    wasm_func_get_param_types :: proc "c" (func_inst: Function_Inst, module_inst: Module_Inst, param_types: [^]Val_Kind) ---
 
-    wasm_valtype_delete :: proc "c" (^wasm_valtype_t) ---
-    wasm_valtype_new :: proc "c" (wasm_valtype_t) -> ^wasm_valtype_t ---
+    /**
+     * Get result types of the function instance
+     *
+     * @param func_inst the function instance
+     * @param module_inst the module instance the function instance belongs to
+     * @param result_types the result types returned
+     */
+    wasm_func_get_result_types :: proc "c" (func_inst: Function_Inst, module_inst: Module_Inst, result_types: [^]Val_Kind) ---
 
-    wasm_valtype_kind :: proc "c" (^wasm_valtype_t) -> wasm_valkind_t ---
+    /**
+     * Call the given WASM function of a WASM module instance with
+     * arguments (bytecode and AoT).
+     *
+     * @param exec_env the execution environment to call the function,
+     *   which must be created from wasm_create_exec_env()
+     * @param function the function to call
+     * @param argc total cell number that the function parameters occupy,
+     *   a cell is a slot of the uint32 array argv[], e.g. i32/f32 argument
+     *   occupies one cell, i64/f64 argument occupies two cells, note that
+     *   it might be different from the parameter number of the function
+     * @param argv the arguments. If the function has return value,
+     *   the first (or first two in case 64-bit return value) element of
+     *   argv stores the return value of the called WASM function after this
+     *   function returns.
+     *
+     * @return true if success, false otherwise and exception will be thrown,
+     *   the caller can call wasm_runtime_get_exception to get the exception
+     *   info.
+     */
+    wasm_runtime_call_wasm :: proc "c" (exec_env: Exec_Env, function: Function_Inst, argc: libc.uint32_t, argv: [^]libc.uint32_t) -> libc.bool ---
 
-    wasm_functype_vec_new_empty :: proc "c" (out: ^wasm_functype_vec_t) ---
-    wasm_functype_vec_new_uninitialized :: proc "c" (out: ^wasm_functype_vec_t, _: libc.size_t) ---
-    wasm_functype_vec_new :: proc "c" (out: ^wasm_functype_vec_t, _: libc.size_t, _: [^]^wasm_functype_t) ---
-    wasm_functype_vec_copy :: proc "c" (out: ^wasm_functype_vec_t, _: ^wasm_functype_vec_t) ---
-    wasm_functype_vec_delete :: proc "c" (^wasm_functype_vec_t) ---
+    /**
+     * Call the given WASM function of a WASM module instance with
+     * provided results space and arguments (bytecode and AoT).
+     *
+     * @param exec_env the execution environment to call the function,
+     *   which must be created from wasm_create_exec_env()
+     * @param function the function to call
+     * @param num_results the number of results
+     * @param results the pre-alloced pointer to get the results
+     * @param num_args the number of arguments
+     * @param args the arguments
+     *
+     * @return true if success, false otherwise and exception will be thrown,
+     *   the caller can call wasm_runtime_get_exception to get the exception
+     *   info.
+     */
+    wasm_runtime_call_wasm_a :: proc "c" (exec_env: Exec_Env, function: Function_Inst, num_results: libc.uint32_t, results: [^]Val, num_args: libc.uint32_t, args: [^]Val) -> libc.bool --- 
 
-    wasm_functype_delete :: proc "c" (^wasm_functype_t) ---
-    wasm_functype_new :: proc "c" (params, results: ^wasm_valtype_vec_t) -> ^wasm_valtype_vec_t ---
-    wasm_functype_params :: proc "c" (^wasm_functype_t) -> ^wasm_valtype_vec_t ---
-    wasm_functype_result :: proc "c" (^wasm_functype_t) -> ^wasm_valtype_vec_t ---
+    /**
+     * Get exception info of the WASM module instance.
+     *
+     * @param module_inst the WASM module instance
+     *
+     * @return the exception string
+     */
+    wasm_runtime_get_exception :: proc "c" (module_inst: Module_Inst) -> cstring ---
 
-    wasm_globaltype_vec_new_empty :: proc "c" (out: ^wasm_globaltype_vec_t) ---
-    wasm_globaltype_vec_new_uninitialized :: proc "c" (out: ^wasm_globaltype_vec_t, _: libc.size_t) ---
-    wasm_globaltype_vec_new :: proc "c" (out: ^wasm_globaltype_vec_t, _: libc.size_t, _: [^]^wasm_globaltype_t) ---
-    wasm_globaltype_vec_copy :: proc "c" (out: ^wasm_globaltype_vec_t, _: ^wasm_globaltype_vec_t) ---
-    wasm_globaltype_vec_delete :: proc "c" (^wasm_globaltype_vec_t) ---
-
-    wasm_globaltype_delete :: proc "c" (^wasm_globaltype_t) ---
 }
-
-wasm_valkind_is_num :: #force_inline proc "contextless" (k: wasm_valkind_t) -> bool {
-    return int(k) < int(wasm_valkind_t.WASM_EXTERNREF)
-}
-
-wasm_valkind_is_ref :: #force_inline proc "contextless" (k: wasm_valkind_t) -> bool {
-    return int(k) >= int(wasm_valkind_t.WASM_EXTERNREF)
-}
-
-wasm_valtype_is_num :: #force_inline proc "c" (t: ^wasm_valtype_t) -> bool {
-    return wasm_valkind_is_num(wasm_valtype_kind(t))
-}
-
-wasm_valtype_is_ref :: #force_inline proc "c" (t: ^wasm_valtype_t) -> bool {
-    return wasm_valkind_is_ref(wasm_valtype_kind(t))
-}
-
