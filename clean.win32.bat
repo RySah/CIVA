@@ -15,7 +15,7 @@ set "PACKAGE_LOCK_JSON=%NPM_PACKAGE_DIR%\package-lock.json"
 set "PACKAGE_JSON=%NPM_PACKAGE_DIR%\package.json"
 set "NODE_MODULES=%NPM_PACKAGE_DIR%\node_modules"
 
-set "CIVA_EXE_PATH=%PROJECT_OUTPUT_DIR%\civa.exe"
+set "CIVA_EXE_PATH=%NPM_PACKAGE_DIR%\civa.exe"
 set "CIVA_SRC_ROOT=%PROJECT_ROOT%civa"
 
 set "LOG_DIR=%PROJECT_OUTPUT_DIR%\logs"

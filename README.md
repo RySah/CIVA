@@ -1,6 +1,7 @@
 # CIVA
 
-## WARNING: This project is not ready for public use. Currently only making this repository public to allow github to host the schemas. Assume below is ### simply a concept
+> [!WARNING]
+> This project is not ready for public use. Currently only making this repository public to allow github to host the schemas. Until a release assume whats below is "concept".
 
 CIVA (Scene Interface & Vector Architecture) is a declarative application schema intended to describe UI structure,
 graphics, and links to application logic in a way that can be compiled for
