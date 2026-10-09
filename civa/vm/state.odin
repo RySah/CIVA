@@ -234,5 +234,8 @@ state_opc_exec :: proc "contextless" (self: ^State, opc: OpCode) {
         case .JMP64_0:
             v := stack_pop(self.stack, u64)[0]
             self.pc = v
+        case .JMP32_0:
+            v := stack_pop(self.stack, u32)[0]
+            self.pc = u64(v)
     }
 }

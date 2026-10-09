@@ -12,6 +12,8 @@ set "LIBXML2_OUTPUT_DIR=%PROJECT_ROOT%\.out\libxml2"
 set "WAMR_BUILD_DIR=%PROJECT_ROOT%\.build\external\WAMR"
 set "WAMR_OUTPUT_DIR=%PROJECT_ROOT%\.out\WAMR"
 
+set "CEF_OUTPUT_DIR=%PROJECT_ROOT%\.out\cef"
+
 set "LOG_DIR=%PROJECT_ROOT%\.out\logs"
 set "LOG_FILE=%LOG_DIR%\clean_ext.log"
 
@@ -127,6 +129,34 @@ if exist "%WAMR_OUTPUT_DIR%" (
     )
 ) else (
     call "%STATUS%" log "Output directory does not exist: %WAMR_OUTPUT_DIR%"
+)
+
+
+rem ===
+rem CEF
+rem ===
+
+
+rem ---
+rem Remove CEF output directory
+rem ---
+
+if exist "%CEF_OUTPUT_DIR%" (
+    call "%STATUS%" running "Removing CEF output directory"
+
+    rmdir /s /q "%CEF_OUTPUT_DIR%" >> "%LOG_FILE%" 2>&1
+    set "RESULT=!ERRORLEVEL!"
+
+    call "%STATUS%" result "Removing CEF output directory" "!RESULT!" "0"
+
+    if not "!RESULT!"=="0" (
+        echo.
+        echo See log:
+        echo %LOG_FILE%
+        exit /b !RESULT!
+    )
+) else (
+    call "%STATUS%" log "Output directory does not exist: %CEF_OUTPUT_DIR%"
 )
 
 

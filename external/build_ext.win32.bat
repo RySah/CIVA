@@ -29,6 +29,13 @@ set "WAMR_SOURCE=%SCRIPT_DIR%wasm-micro-runtime-WAMR-2.4.5"
 set "WAMR_BUILD_DIR=%PROJECT_ROOT%\.build\external\WAMR"
 set "WAMR_OUTPUT_DIR=%PROJECT_ROOT%\.out\WAMR\lib"
 
+rem ---
+rem CEF
+rem ---
+
+set "CEF_SOURCE=%SCRIPT_DIR%cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_windows32_minimal"
+set "CEF_OUTPUT_DIR=%PROJECT_ROOT%\.out\cef"
+set "CEF_RELEASE_DIR=%CEF_SOURCE%\Release"
 
 rem ---
 rem Logging
@@ -270,6 +277,51 @@ cmake ^
 set "RESULT=%ERRORLEVEL%"
 
 call "%STATUS%" result "Building WAMR" "%RESULT%" "0"
+
+if not "%RESULT%"=="0" (
+    echo.
+    echo See log:
+    echo %LOG_FILE%
+    exit /b %RESULT%
+)
+
+
+rem ===
+rem CEF
+rem ===
+
+
+rem ---
+rem Create CEF output directory
+rem ---
+
+if not exist "%CEF_OUTPUT_DIR%" (
+    call "%STATUS%" running "Creating CEF output directory"
+
+    mkdir "%CEF_OUTPUT_DIR%" >> "%LOG_FILE%" 2>&1
+    set "RESULT=!ERRORLEVEL!"
+
+    call "%STATUS%" result "Creating CEF output directory" "!RESULT!" "0"
+
+    if not "!RESULT!"=="0" (
+        echo.
+        echo See log:
+        echo %LOG_FILE%
+        exit /b !RESULT!
+    )
+)
+
+
+rem ---
+rem Copy CEF DLLs
+rem ---
+
+call "%STATUS%" running "Copying CEF DLLs"
+
+copy /Y "%CEF_RELEASE_DIR%\*.dll" "%CEF_OUTPUT_DIR%\" >> "%LOG_FILE%" 2>&1
+set "RESULT=%ERRORLEVEL%"
+
+call "%STATUS%" result "Copying CEF DLLs" "%RESULT%" "0"
 
 if not "%RESULT%"=="0" (
     echo.

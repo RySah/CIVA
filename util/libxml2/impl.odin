@@ -6,15 +6,6 @@ else                     do foreign import lib "../../.out/libxml2/lib/libxml2s.
 
 import "core:c"
 
-/*
-typedef unsigned char xmlChar;
-
-/**
- * Macro to cast a string to an xmlChar * when one know its safe.
- */
-#define BAD_CAST (xmlChar *)
-*/
-
 xmlDocPtr :: distinct rawptr
 xmlSchemaParserCtxtPtr :: distinct rawptr
 xmlSchemaPtr :: distinct rawptr

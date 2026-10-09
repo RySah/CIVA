@@ -9,13 +9,14 @@ set "STATUS=%PROJECT_ROOT%util\scripts\status.bat"
 set "EXTERNAL_CLEAN_SCRIPT=%PROJECT_ROOT%external\clean_ext.win32.bat"
 
 set "PROJECT_OUTPUT_DIR=%PROJECT_ROOT%.out"
-set "NPM_PACKAGE_DIR=%PROJECT_OUTPUT_DIR%\civa_pkg"
+set "NPM_PACKAGE_DIR=%PROJECT_OUTPUT_DIR%\civa"
 
 set "PACKAGE_LOCK_JSON=%NPM_PACKAGE_DIR%\package-lock.json"
 set "PACKAGE_JSON=%NPM_PACKAGE_DIR%\package.json"
 set "NODE_MODULES=%NPM_PACKAGE_DIR%\node_modules"
 
 set "CIVA_EXE_PATH=%NPM_PACKAGE_DIR%\civa.exe"
+set "NPM_PACKAGE_DLLS=%NPM_PACKAGE_DIR%\*.dll"
 set "CIVA_SRC_ROOT=%PROJECT_ROOT%civa"
 
 set "LOG_DIR=%PROJECT_OUTPUT_DIR%\logs"
@@ -73,6 +74,29 @@ if exist "%CIVA_EXE_PATH%" (
     )
 ) else (
     call "%STATUS%" log "CIVA executable does not exist: %CIVA_EXE_PATH%"
+)
+
+
+rem ---
+rem Remove application DLLs
+rem ---
+
+if exist "%NPM_PACKAGE_DLLS%" (
+    call "%STATUS%" running "Removing application DLLs"
+
+    del /f /q "%NPM_PACKAGE_DLLS%" >> "%LOG_FILE%" 2>&1
+    set "RESULT=!ERRORLEVEL!"
+
+    call "%STATUS%" result "Removing application DLLs" "!RESULT!" "0"
+
+    if not "!RESULT!"=="0" (
+        echo.
+        echo See log:
+        echo %LOG_FILE%
+        exit /b !RESULT!
+    )
+) else (
+    call "%STATUS%" log "Application DLLs do not exist: %NPM_PACKAGE_DLLS%"
 )
 
 

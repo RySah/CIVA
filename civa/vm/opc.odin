@@ -35,6 +35,7 @@ OpCode :: enum u8 {
     EXIT32_0 = 40,
 
     JMP64_0 = 41,
+    JMP32_0 = 42,
 
 }
 

@@ -9,7 +9,8 @@ set "STATUS=%PROJECT_ROOT%util\scripts\status.bat"
 set "EXTERNAL_BUILD_SCRIPT=%PROJECT_ROOT%external\build_ext.win32.bat"
 
 set "PROJECT_OUTPUT_DIR=%PROJECT_ROOT%.out"
-set "NPM_PACKAGE_DIR=%PROJECT_OUTPUT_DIR%\civa_pkg"
+set "NPM_PACKAGE_DIR=%PROJECT_OUTPUT_DIR%\civa"
+set "CEF_OUTPUT_DIR=%PROJECT_OUTPUT_DIR%\cef"
 
 set "CIVA_EXE_PATH=%NPM_PACKAGE_DIR%\civa.exe"
 set "CIVA_SRC_ROOT=%PROJECT_ROOT%civa"
@@ -56,6 +57,26 @@ rem ---
 if not exist "%NPM_PACKAGE_DIR%" (
     mkdir "%NPM_PACKAGE_DIR%"
 )
+
+
+rem ---
+rem Copy CEF DLLs into the application directory
+rem ---
+
+call "%STATUS%" running "Copying CEF DLLs into application directory"
+
+copy /Y "%CEF_OUTPUT_DIR%\*.dll" "%NPM_PACKAGE_DIR%\" >> "%LOG_FILE%" 2>&1
+set "RESULT=!ERRORLEVEL!"
+
+call "%STATUS%" result "Copying CEF DLLs into application directory" "!RESULT!" "0"
+
+if not "!RESULT!"=="0" (
+    echo.
+    echo See log:
+    echo %LOG_FILE%
+    exit /b !RESULT!
+)
+
 
 pushd "%NPM_PACKAGE_DIR%"
 
