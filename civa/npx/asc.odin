@@ -1,12 +1,23 @@
 package civa_npx
 
-import "core:strings"
 import "core:fmt"
 import "core:mem"
 import "core:slice"
-import "core:os"
+
+import cli "../../util/cli"
 
 // https://www.assemblyscript.org/compiler.html#compiler-options
+
+General_Error :: enum u8 {
+    None,
+    FailedToRun
+}
+
+Error :: union #shared_nil {
+    General_Error,
+    mem.Allocator_Error,
+    cli.Error
+}
 
 // Optimizes the module.
 ASC_Optimization_Kind :: enum u8 {
@@ -18,16 +29,7 @@ ASC_Optimization_Kind :: enum u8 {
     Size
 }
 
-// Optimizes the module to the specified levels.
-ASC_Optimization_Level :: struct {
-    kind: ASC_Optimization_Kind,
-    // How much to focus on optimizing code. [0-3]
-    level: u8,
-    // How much to focus on shrinking code size. [0-2, s=1, z=2]
-    shrink_level: u8
-}
-
-sbprint_asc_optimization_kind_as_args :: proc(buf: ^strings.Builder, optk: ASC_Optimization_Kind) -> string {
+command_list_add_asc_optimization_kind :: proc(self: ^cli.Command_List, optk: ASC_Optimization_Kind) -> (err: mem.Allocator_Error) {
     suffix: string = ---
     switch optk {
         case .Default:
@@ -37,13 +39,26 @@ sbprint_asc_optimization_kind_as_args :: proc(buf: ^strings.Builder, optk: ASC_O
         case .Size:
             suffix = "size"
     }
-    return fmt.sbprintf(buf, "-O%s ", suffix)
+    return cli.command_list_append(self, "--optimize", suffix)
 }
 
-sbprint_asc_optimization_level_as_args :: proc(buf: ^strings.Builder, optlvl: ASC_Optimization_Level) -> string {
-    sbprint_asc_optimization_kind_as_args(buf, optlvl.kind)
-    return fmt.sbprintf(buf, "--optimizeLevel %d --shrinkLevel %d ", optlvl.level, optlvl.shrink_level)
+// Optimizes the module to the specified levels.
+ASC_Optimization_Level :: struct {
+    kind: ASC_Optimization_Kind,
+    // How much to focus on optimizing code. [0-3]
+    level: u8,
+    // How much to focus on shrinking code size. [0-2, s=1, z=2]
+    shrink_level: u8
 }
+
+command_list_add_asc_optimization_level :: proc(self: ^cli.Command_List, optlvl: ASC_Optimization_Level) -> (err: mem.Allocator_Error) {
+    command_list_add_asc_optimization_kind(self, optlvl.kind) or_return
+    optimize_level := fmt.aprintf("%d", optlvl.level)
+    defer delete(optimize_level)
+    shrink_level := fmt.aprintf("%d", optlvl.shrink_level)
+    defer delete(shrink_level)
+    return cli.command_list_append(self, "--optimizeLevel", optimize_level, "--shrinkLevel", shrink_level)
+} 
 
 // Optimizes the module to the specified levels. With special flags.
 ASC_Optimization :: struct {
@@ -54,14 +69,10 @@ ASC_Optimization :: struct {
     no_assert: bool
 }
 
-sbprint_asc_optimization_as_args :: proc(buf: ^strings.Builder, opt: ASC_Optimization) -> (res: string) {
-    res = sbprint_asc_optimization_level_as_args(buf, opt.level)
-    if opt.converge {
-        res = fmt.sbprint(buf, "--converge ")
-    }
-    if opt.no_assert {
-        res = fmt.sbprint(buf, "--noAssert ")
-    }
+command_list_add_asc_optimization :: proc(self: ^cli.Command_List, opt: ASC_Optimization) -> (err: mem.Allocator_Error) {
+    command_list_add_asc_optimization_level(self, opt.level) or_return
+    if opt.converge do cli.command_list_append(self, "--converge") or_return
+    if opt.no_assert do cli.command_list_append(self, "--noAssert") or_return
     return
 }
 
@@ -74,7 +85,7 @@ ASC_Builtin_Runtime :: enum u8 {
     Stub
 }
 
-sbprint_asc_builtin_runtime_as_args :: proc(buf: ^strings.Builder, br: ASC_Builtin_Runtime) -> string {
+command_list_add_asc_builtin_runtime :: proc(self: ^cli.Command_List, br: ASC_Builtin_Runtime) -> (err: mem.Allocator_Error) {
     suffix: string = ---
     switch br {
         case .Incremental:
@@ -84,7 +95,7 @@ sbprint_asc_builtin_runtime_as_args :: proc(buf: ^strings.Builder, br: ASC_Built
         case .Stub:
             suffix = "stub"
     }
-    return fmt.sbprintf(buf, "--runtime %s ", suffix)
+    return cli.command_list_append(self, "--runtime", suffix)
 }
 
 ASC_Runtime :: union #no_nil {
@@ -93,14 +104,14 @@ ASC_Runtime :: union #no_nil {
     string
 }
 
-sbprint_asc_runtime_as_args :: proc(buf: ^strings.Builder, r: ASC_Runtime) -> string {
+command_list_add_asc_runtime :: proc(self: ^cli.Command_List, r: ASC_Runtime) -> (err: mem.Allocator_Error) {
     switch actual in r {
         case ASC_Builtin_Runtime:
-            return sbprint_asc_builtin_runtime_as_args(buf, actual)
+            return command_list_add_asc_builtin_runtime(self, actual)
         case string:
-            return fmt.sbprintf(buf, "--runtime \"%s\" ", actual)
+            return cli.command_list_append(self, "--runtime", actual)
     }
-    return ""
+    return
 }
 
 ASC_Feature :: enum u8 {
@@ -167,19 +178,23 @@ ASC_Config :: struct {
     disabled_features: ASC_Feature_Set
 }
 
-sbprint_asc_config_as_args :: proc(buf: ^strings.Builder, conf: ASC_Config) -> (res: string) {
-    res = sbprint_asc_optimization_as_args(buf, conf.opt)
-    if output_file, has_output_file := conf.wasm_output_file.?; has_output_file do res = fmt.sbprintf(buf, "-o \"%s\" ", output_file)
-    if text_output_file, has_text_output_file := conf.wat_output_file.?; has_text_output_file do res = fmt.sbprintf(buf, "-t \"%s\" ", text_output_file)
-    if export_start, has_export_start := conf.export_start.?; has_export_start do res = fmt.sbprintf(buf, "--exportStart %s ", export_start)
-    res = sbprint_asc_runtime_as_args(buf, conf.runtime)
-    if conf.low_memory_limit do res = fmt.sbprintf(buf, "--lowMemoryLimit ")
-    if use, has_use := conf.use.?; has_use {
-        for k, v in use do res = fmt.sbprintf(buf, "-u %s=%s ", k, v)
+command_list_add_asc_config :: proc(self: ^cli.Command_List, config: ^ASC_Config) -> (err: mem.Allocator_Error) {
+    command_list_add_asc_optimization(self, config.opt) or_return
+    if output_file, has_output_file := config.wasm_output_file.?; has_output_file do cli.command_list_append(self, "--outFile", output_file) or_return
+    if text_output_file, has_text_output_file := config.wat_output_file.?; has_text_output_file do cli.command_list_append(self, "--textFile", text_output_file) or_return
+    if export_start, has_export_start := config.export_start.?; has_export_start do cli.command_list_append(self, "--exportStart", export_start) or_return
+    command_list_add_asc_runtime(self, config.runtime) or_return
+    if config.low_memory_limit do cli.command_list_append(self, "--lowMemoryLimit") or_return
+    if use, has_use := config.use.?; has_use {
+        for k, v in use {
+            d := fmt.aprintf("%s=%s", k, v)
+            defer delete(d)
+            cli.command_list_append(self, "--use", d) or_return
+        }
     }
-    enabled_features: []ASC_Feature = slice.bitset_to_enum_slice(conf.enabled_features, ASC_Feature)
+    enabled_features: []ASC_Feature = slice.bitset_to_enum_slice(config.enabled_features, ASC_Feature)
     defer delete(enabled_features)
-    disabled_features: []ASC_Feature = slice.bitset_to_enum_slice(conf.disabled_features, ASC_Feature)
+    disabled_features: []ASC_Feature = slice.bitset_to_enum_slice(config.disabled_features, ASC_Feature)
     defer delete(disabled_features)
     for feat in enabled_features {
         if feat in ASC_DEFAULT_DISABLED_FEATURES {
@@ -196,7 +211,7 @@ sbprint_asc_config_as_args :: proc(buf: ^strings.Builder, conf: ASC_Config) -> (
                 case .StringRef: suffix = "stringref"
                 case .RelaxedSimd: suffix = "relaxed-simd"
             }
-            res = fmt.sbprintf(buf, "--enable %s ", suffix)
+            cli.command_list_append(self, "--enable", suffix) or_return
         }
     }
     for feat in disabled_features {
@@ -214,27 +229,32 @@ sbprint_asc_config_as_args :: proc(buf: ^strings.Builder, conf: ASC_Config) -> (
                 case .StringRef: suffix = "stringref"
                 case .RelaxedSimd: suffix = "relaxed-simd"
             }
-            res = fmt.sbprintf(buf, "--disable %s ", suffix)
+            cli.command_list_append(self, "--disable", suffix) or_return
         }
     }
     return
 }
 
-asc_config_to_cli_cmd :: proc(self: ^ASC_Config, allocator := context.allocator) -> (res: string, err: mem.Allocator_Error) {
-    sb: strings.Builder
-    strings.builder_init(&sb) or_return
-
-    strings.write_string(&sb, "npx asc ")
-    sbprint_asc_config_as_args(&sb, self^)
-
-    res = strings.to_string(sb)
+asc_config_to_command_list :: proc(self: ^ASC_Config, allocator := context.allocator) -> (cl: cli.Command_List, err: mem.Allocator_Error) {
+    cl = cli.make_command_list(allocator=allocator) or_return
+    cli.command_list_append(&cl, "npx", "asc") or_return
+    command_list_add_asc_config(&cl, self) or_return
     return
 }
 
-asc_config_run :: proc(self: ^ASC_Config, working_dir := "") {
-    pdesc: os.Process_Desc = ---
-    pdesc.working_dir = working_dir
+asc_config_run :: proc(self: ^ASC_Config, working_dir := "") -> (err: Error) {
+    cl := asc_config_to_command_list(self) or_return
+    defer cli.delete_command_list(&cl)
 
-    pdesc.command = []string{ "npx", "asc" }
+    pstate, stdout, stderr := cli.command_list_exec(&cl) or_return
+    defer delete(stdout)
+	defer delete(stderr)
 
+    success := pstate.exit_code == 0 when ODIN_OS == .Windows else pstate.success
+    if !success {
+        err = .FailedToRun
+        return
+    }
+
+    return
 }
