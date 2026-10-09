@@ -313,21 +313,93 @@ if not exist "%CEF_OUTPUT_DIR%" (
 
 
 rem ---
-rem Copy CEF DLLs
+rem Copy CEF release files
 rem ---
 
-call "%STATUS%" running "Copying CEF DLLs"
+call "%STATUS%" running "Copying CEF release files"
 
-copy /Y "%CEF_RELEASE_DIR%\*.dll" "%CEF_OUTPUT_DIR%\" >> "%LOG_FILE%" 2>&1
-set "RESULT=%ERRORLEVEL%"
+robocopy "%CEF_RELEASE_DIR%" "%CEF_OUTPUT_DIR%" /MIR /XF "libcef.dll.part*" /R:2 /W:1 /NFL /NDL /NJH /NJS /NP >> "%LOG_FILE%" 2>&1
+set "RESULT=!ERRORLEVEL!"
 
-call "%STATUS%" result "Copying CEF DLLs" "%RESULT%" "0"
+if !RESULT! GEQ 8 (
+    set "RESULT=1"
+) else (
+    set "RESULT=0"
+)
 
-if not "%RESULT%"=="0" (
+call "%STATUS%" result "Copying CEF release files" "!RESULT!" "0"
+
+if not "!RESULT!"=="0" (
     echo.
     echo See log:
     echo %LOG_FILE%
-    exit /b %RESULT%
+    exit /b !RESULT!
+)
+
+rem ---
+rem Reassemble the GitHub-size-limited CEF core library
+rem ---
+
+call "%STATUS%" running "Reassembling CEF core library"
+
+if not exist "%CEF_RELEASE_DIR%\libcef.dll.part1" (
+    echo Missing CEF library chunk: %CEF_RELEASE_DIR%\libcef.dll.part1 >> "%LOG_FILE%"
+    call "%STATUS%" result "Reassembling CEF core library" "1" "0"
+    echo.
+    echo A CEF library chunk is missing from:
+    echo %CEF_RELEASE_DIR%
+    echo.
+    echo See log:
+    echo %LOG_FILE%
+    exit /b 1
+)
+
+if not exist "%CEF_RELEASE_DIR%\libcef.dll.part2" (
+    echo Missing CEF library chunk: %CEF_RELEASE_DIR%\libcef.dll.part2 >> "%LOG_FILE%"
+    call "%STATUS%" result "Reassembling CEF core library" "1" "0"
+    echo.
+    echo A CEF library chunk is missing from:
+    echo %CEF_RELEASE_DIR%
+    echo.
+    echo See log:
+    echo %LOG_FILE%
+    exit /b 1
+)
+
+if not exist "%CEF_RELEASE_DIR%\libcef.dll.part3" (
+    echo Missing CEF library chunk: %CEF_RELEASE_DIR%\libcef.dll.part3 >> "%LOG_FILE%"
+    call "%STATUS%" result "Reassembling CEF core library" "1" "0"
+    echo.
+    echo A CEF library chunk is missing from:
+    echo %CEF_RELEASE_DIR%
+    echo.
+    echo See log:
+    echo %LOG_FILE%
+    exit /b 1
+)
+
+if not exist "%CEF_RELEASE_DIR%\libcef.dll.part4" (
+    echo Missing CEF library chunk: %CEF_RELEASE_DIR%\libcef.dll.part4 >> "%LOG_FILE%"
+    call "%STATUS%" result "Reassembling CEF core library" "1" "0"
+    echo.
+    echo A CEF library chunk is missing from:
+    echo %CEF_RELEASE_DIR%
+    echo.
+    echo See log:
+    echo %LOG_FILE%
+    exit /b 1
+)
+
+copy /Y /B "%CEF_RELEASE_DIR%\libcef.dll.part1"+"%CEF_RELEASE_DIR%\libcef.dll.part2"+"%CEF_RELEASE_DIR%\libcef.dll.part3"+"%CEF_RELEASE_DIR%\libcef.dll.part4" "%CEF_OUTPUT_DIR%\libcef.dll" >> "%LOG_FILE%" 2>&1
+set "RESULT=!ERRORLEVEL!"
+
+call "%STATUS%" result "Reassembling CEF core library" "!RESULT!" "0"
+
+if not "!RESULT!"=="0" (
+    echo.
+    echo See log:
+    echo %LOG_FILE%
+    exit /b !RESULT!
 )
 
 

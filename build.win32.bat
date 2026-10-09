@@ -11,6 +11,7 @@ set "EXTERNAL_BUILD_SCRIPT=%PROJECT_ROOT%external\build_ext.win32.bat"
 set "PROJECT_OUTPUT_DIR=%PROJECT_ROOT%.out"
 set "NPM_PACKAGE_DIR=%PROJECT_OUTPUT_DIR%\civa"
 set "CEF_OUTPUT_DIR=%PROJECT_OUTPUT_DIR%\cef"
+set "CEF_FILES_MANIFEST=%CEF_OUTPUT_DIR%\.package-files"
 
 set "CIVA_EXE_PATH=%NPM_PACKAGE_DIR%\civa.exe"
 set "CIVA_SRC_ROOT=%PROJECT_ROOT%civa"
@@ -60,15 +61,25 @@ if not exist "%NPM_PACKAGE_DIR%" (
 
 
 rem ---
-rem Copy CEF DLLs into the application directory
+rem Copy CEF release files into the application directory
 rem ---
 
-call "%STATUS%" running "Copying CEF DLLs into application directory"
+call "%STATUS%" running "Recording CEF release files"
 
-copy /Y "%CEF_OUTPUT_DIR%\*.dll" "%NPM_PACKAGE_DIR%\" >> "%LOG_FILE%" 2>&1
+> "%CEF_FILES_MANIFEST%" (
+    for /r "%CEF_OUTPUT_DIR%" %%F in (*) do (
+        if /i not "%%~nxF"==".package-files" (
+            set "CEF_RELATIVE_PATH=%%~fF"
+            set "CEF_RELATIVE_PATH=!CEF_RELATIVE_PATH:%CEF_OUTPUT_DIR%\=!"
+            echo(!CEF_RELATIVE_PATH!
+        )
+    )
+)
 set "RESULT=!ERRORLEVEL!"
 
-call "%STATUS%" result "Copying CEF DLLs into application directory" "!RESULT!" "0"
+if not exist "%CEF_FILES_MANIFEST%" set "RESULT=1"
+
+call "%STATUS%" result "Recording CEF release files" "!RESULT!" "0"
 
 if not "!RESULT!"=="0" (
     echo.
@@ -77,6 +88,25 @@ if not "!RESULT!"=="0" (
     exit /b !RESULT!
 )
 
+call "%STATUS%" running "Copying CEF release files into application directory"
+
+robocopy "%CEF_OUTPUT_DIR%" "%NPM_PACKAGE_DIR%" /E /XF ".package-files" /R:2 /W:1 /NFL /NDL /NJH /NJS /NP >> "%LOG_FILE%" 2>&1
+set "RESULT=!ERRORLEVEL!"
+
+if !RESULT! GEQ 8 (
+    set "RESULT=1"
+) else (
+    set "RESULT=0"
+)
+
+call "%STATUS%" result "Copying CEF release files into application directory" "!RESULT!" "0"
+
+if not "!RESULT!"=="0" (
+    echo.
+    echo See log:
+    echo %LOG_FILE%
+    exit /b !RESULT!
+)
 
 pushd "%NPM_PACKAGE_DIR%"
 
