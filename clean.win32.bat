@@ -10,8 +10,6 @@ set "EXTERNAL_CLEAN_SCRIPT=%PROJECT_ROOT%external\clean_ext.win32.bat"
 
 set "PROJECT_OUTPUT_DIR=%PROJECT_ROOT%.out"
 set "NPM_PACKAGE_DIR=%PROJECT_OUTPUT_DIR%\civa"
-set "CEF_OUTPUT_DIR=%PROJECT_OUTPUT_DIR%\cef"
-set "CEF_FILES_MANIFEST=%CEF_OUTPUT_DIR%\.package-files"
 
 set "PACKAGE_LOCK_JSON=%NPM_PACKAGE_DIR%\package-lock.json"
 set "PACKAGE_JSON=%NPM_PACKAGE_DIR%\package.json"
@@ -34,35 +32,6 @@ call "%STATUS%" init "%LOG_FILE%"
 if errorlevel 1 (
     echo Failed to initialize clean logging.
     exit /b 1
-)
-
-
-rem ---
-rem Remove CEF release files
-rem ---
-
-if exist "%CEF_FILES_MANIFEST%" (
-    call "%STATUS%" running "Removing CEF release files"
-
-    set "RESULT=0"
-
-    for /f "usebackq delims=" %%F in ("%CEF_FILES_MANIFEST%") do (
-        if exist "%NPM_PACKAGE_DIR%\%%F" (
-            del /f /q "%NPM_PACKAGE_DIR%\%%F" >> "%LOG_FILE%" 2>&1
-            if errorlevel 1 set "RESULT=1"
-        )
-    )
-
-    call "%STATUS%" result "Removing CEF release files" "!RESULT!" "0"
-
-    if not "!RESULT!"=="0" (
-        echo.
-        echo See log:
-        echo %LOG_FILE%
-        exit /b !RESULT!
-    )
-) else (
-    call "%STATUS%" log "CEF release file manifest does not exist: %CEF_FILES_MANIFEST%"
 )
 
 
@@ -90,28 +59,7 @@ if exist "%CIVA_EXE_PATH%" (
 
 
 rem ---
-rem Remove application DLLs left by builds without a CEF manifest
-rem ---
-
-if not exist "%CEF_FILES_MANIFEST%" if exist "%NPM_PACKAGE_DLLS%" (
-    call "%STATUS%" running "Removing legacy application DLLs"
-
-    del /f /q "%NPM_PACKAGE_DLLS%" >> "%LOG_FILE%" 2>&1
-    set "RESULT=!ERRORLEVEL!"
-
-    call "%STATUS%" result "Removing legacy application DLLs" "!RESULT!" "0"
-
-    if not "!RESULT!"=="0" (
-        echo.
-        echo See log:
-        echo %LOG_FILE%
-        exit /b !RESULT!
-    )
-)
-
-
-rem ---
-rem Clean external dependencies after consuming the CEF file manifest
+rem Clean external dependencies
 rem ---
 
 call "%STATUS%" running "Cleaning external dependencies"
