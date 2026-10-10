@@ -12,6 +12,9 @@ set "LIBXML2_OUTPUT_DIR=%PROJECT_ROOT%\.out\libxml2"
 set "WAMR_BUILD_DIR=%PROJECT_ROOT%\.build\external\WAMR"
 set "WAMR_OUTPUT_DIR=%PROJECT_ROOT%\.out\WAMR"
 
+set "WEBVIEW_BUILD_DIR=%PROJECT_ROOT%\.build\external\webview"
+set "WEBVIEW_OUTPUT_DIR=%PROJECT_ROOT%\.out\webview"
+
 set "LOG_DIR=%PROJECT_ROOT%\.out\logs"
 set "LOG_FILE=%LOG_DIR%\clean_ext.log"
 
@@ -127,6 +130,57 @@ if exist "%WAMR_OUTPUT_DIR%" (
     )
 ) else (
     call "%STATUS%" log "Output directory does not exist: %WAMR_OUTPUT_DIR%"
+)
+
+
+rem ===
+rem webview
+rem ===
+
+
+rem ---
+rem Remove webview build directory
+rem ---
+
+if exist "%WEBVIEW_BUILD_DIR%" (
+    call "%STATUS%" running "Removing webview build directory"
+
+    rmdir /s /q "%WEBVIEW_BUILD_DIR%" >> "%LOG_FILE%" 2>&1
+    set "RESULT=!ERRORLEVEL!"
+
+    call "%STATUS%" result "Removing webview build directory" "!RESULT!" "0"
+
+    if not "!RESULT!"=="0" (
+        echo.
+        echo See log:
+        echo %LOG_FILE%
+        exit /b !RESULT!
+    )
+) else (
+    call "%STATUS%" log "Build directory does not exist: %WEBVIEW_BUILD_DIR%"
+)
+
+
+rem ---
+rem Remove webview output directory
+rem ---
+
+if exist "%WEBVIEW_OUTPUT_DIR%" (
+    call "%STATUS%" running "Removing webview output directory"
+
+    rmdir /s /q "%WEBVIEW_OUTPUT_DIR%" >> "%LOG_FILE%" 2>&1
+    set "RESULT=!ERRORLEVEL!"
+
+    call "%STATUS%" result "Removing webview output directory" "!RESULT!" "0"
+
+    if not "!RESULT!"=="0" (
+        echo.
+        echo See log:
+        echo %LOG_FILE%
+        exit /b !RESULT!
+    )
+) else (
+    call "%STATUS%" log "Output directory does not exist: %WEBVIEW_OUTPUT_DIR%"
 )
 
 

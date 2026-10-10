@@ -16,6 +16,7 @@ set "PACKAGE_JSON=%NPM_PACKAGE_DIR%\package.json"
 set "NODE_MODULES=%NPM_PACKAGE_DIR%\node_modules"
 
 set "CIVA_EXE_PATH=%NPM_PACKAGE_DIR%\civa.exe"
+set "WEBVIEW2_LOADER_PATH=%NPM_PACKAGE_DIR%\WebView2Loader.dll"
 set "NPM_PACKAGE_DLLS=%NPM_PACKAGE_DIR%\*.dll"
 set "CIVA_SRC_ROOT=%PROJECT_ROOT%civa"
 
@@ -55,6 +56,29 @@ if exist "%CIVA_EXE_PATH%" (
     )
 ) else (
     call "%STATUS%" log "CIVA executable does not exist: %CIVA_EXE_PATH%"
+)
+
+
+rem ---
+rem Remove copied WebView2 loader
+rem ---
+
+if exist "%WEBVIEW2_LOADER_PATH%" (
+    call "%STATUS%" running "Removing WebView2 loader"
+
+    del /f /q "%WEBVIEW2_LOADER_PATH%" >> "%LOG_FILE%" 2>&1
+    set "RESULT=!ERRORLEVEL!"
+
+    call "%STATUS%" result "Removing WebView2 loader" "!RESULT!" "0"
+
+    if not "!RESULT!"=="0" (
+        echo.
+        echo See log:
+        echo %LOG_FILE%
+        exit /b !RESULT!
+    )
+) else (
+    call "%STATUS%" log "WebView2 loader does not exist: %WEBVIEW2_LOADER_PATH%"
 )
 
 
